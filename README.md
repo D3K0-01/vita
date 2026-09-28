@@ -42,7 +42,7 @@ src/
   state/        AppContext — mock app state persisted to AsyncStorage
   data/         mock content (tasks, community posts, trusted contact, progress…)
   navigation/   RootNavigator + one navigator per flow
-  screens/      one folder per flow: onboarding, home, routine, crisis, phases, community, settings, tracking, plans
+  screens/      one folder per flow: onboarding, home, routine, crisis, phases, partners, community, settings, tracking, plans
 ```
 
 ## Screen map (design id → file)
@@ -54,6 +54,7 @@ src/
 | 04 Rotina | 4a/4b (tabs), 4d, 4e | `screens/routine/` |
 | 05 IA / Modo Crise | 5a–5f | `screens/crisis/` |
 | 06 Fases | 6a–6d | `screens/phases/` |
+| 01 Parceiros | 1a–1h | `screens/partners/` |
 | 07 Comunidade | 7a–7d (tabs) | `screens/community/CommunityScreen.tsx` |
 | 08 Configurações | 8a–8c | `screens/settings/` |
 | 09 Acompanhamento | 9a/9b | `screens/tracking/TrackingScreen.tsx` |
@@ -65,4 +66,6 @@ src/
 - The floating SOS button opens the crisis triage (5b) directly; if a crisis session was left mid-step, it resumes at 5e instead ("Você tinha aberto o Modo Crise…").
 - Accessibility (8c) has a "simular modo offline" demo toggle that switches the crisis step guide to the 5f offline variant (emergency numbers + bolded calming item instead of the illustration/breathing prompt).
 - Accessibility (8c) also has a real light/dark toggle — the whole app re-themes, including the crisis flow.
+- Parceiros (1a–1h) é um diretório de locais que adaptam de verdade. O selo "Vita recomenda" só existe onde a equipe visitou — cadastros feitos na tela 1g entram sempre como "indicado pela comunidade", em análise, e nada no app promove um local ao selo. Os filtros de 1b são cumulativos, as ressalvas de adaptação usam ícone neutro (são aviso, não erro) e os cupons ficam em `AsyncStorage`, para abrir no balcão sem internet.
+- A tela de novo relato (chamada por 1f/1h) e as etapas 2 e 3 do cadastro (1g) não estavam no design original — foram implementadas no padrão do app e estão pendentes de revisão de design.
 - "Pequenos Avanços" (6b) draws the phase timeline with the gradient-filled completed step, a highlighted current step, and untouched future steps — no due dates anywhere, matching the "no phase is ever late" principle from the brand manual.
