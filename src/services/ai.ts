@@ -17,6 +17,10 @@ export type AIResult = { text: string; offline: boolean; reason?: string };
  * devolve uma resposta local — o app nunca fica sem resposta.
  */
 export async function askVita(history: AIMessage[], context: AIContext): Promise<AIResult> {
+  if (!CHAT_API_URL) {
+    const last = history[history.length - 1]?.text ?? '';
+    return { text: localReply(last, context), offline: true, reason: 'servidor não configurado' };
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 30000);
   try {

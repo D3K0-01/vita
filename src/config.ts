@@ -8,8 +8,13 @@ import { Platform } from 'react-native';
 //   EXPO_PUBLIC_CHAT_API_URL=https://seu-projeto.vercel.app/api/chat
 //   EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=AIza...
 
-/** Endereço do servidor de IA publicado no Vercel (ver README). */
-const DEFAULT_CHAT_API_URL = 'https://vita-ia.vercel.app/api/chat';
+/**
+ * Endereço do servidor de IA publicado no Vercel (ver README). Depois de
+ * publicar, coloque aqui o endereço do seu projeto, ex:
+ * 'https://vita-app.vercel.app/api/chat' — assim o GitHub Pages e o app no
+ * celular também usam a IA. Vazio = só respostas locais fora do Vercel.
+ */
+const DEFAULT_CHAT_API_URL = '';
 
 function resolveChatUrl(): string {
   const fromEnv = process.env.EXPO_PUBLIC_CHAT_API_URL;
