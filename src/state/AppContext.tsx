@@ -21,7 +21,7 @@ export type CrisisAttempt = { id: string; date: string; worked: boolean };
 export type CrisisCategory = 'sensorial' | 'emocional';
 export type CrisisSession = { category: CrisisCategory; step: number } | null;
 
-export type ChatMessage = { id: string; from: 'user' | 'ai'; text: string; date: string; offline?: boolean };
+export type ChatMessage = { id: string; from: 'user' | 'ai'; text: string; date: string; offline?: boolean; reason?: string };
 export type ChatThread = { id: string; title: string; date: string; messages: ChatMessage[] };
 
 export type HealthyBreak = { id: string; label: string; date: string; childId: string };

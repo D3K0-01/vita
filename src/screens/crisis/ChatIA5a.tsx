@@ -66,7 +66,7 @@ export default function ChatIA5a({ navigation, route }: any) {
       }
     );
     setLoading(false);
-    const aiMsg: ChatMessage = { id: `a${Date.now()}`, from: 'ai', text: result.text, date: new Date().toISOString(), offline: result.offline };
+    const aiMsg: ChatMessage = { id: `a${Date.now()}`, from: 'ai', text: result.text, date: new Date().toISOString(), offline: result.offline, reason: result.reason };
     setState((s) => ({ ...s, chat: [...s.chat, aiMsg] }));
     if (result.offline && result.reason === 'limite') toast('A IA está ocupada agora. Respondi com uma dica salva no app.');
   };
@@ -185,9 +185,9 @@ export default function ChatIA5a({ navigation, route }: any) {
                   </Text>
                 </View>
                 {m.offline ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4, marginLeft: 6 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 5, marginTop: 4, marginLeft: 6, marginRight: 6 }}>
                     <WifiOff size={11} color={palette.textFaint} />
-                    <Text style={[type.caption, { fontSize: 10.5, color: palette.textFaint }]}>resposta salva no app · IA indisponível no momento</Text>
+                    <Text style={[type.caption, { flex: 1, fontSize: 10.5, color: palette.textFaint }]}>resposta salva no app · IA indisponível{m.reason ? ` (${m.reason})` : ''}</Text>
                   </View>
                 ) : null}
               </View>

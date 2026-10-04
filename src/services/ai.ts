@@ -33,10 +33,10 @@ export async function askVita(history: AIMessage[], context: AIContext): Promise
     const data = await r.json().catch(() => ({}));
     if (r.ok && typeof data.reply === 'string' && data.reply.trim()) return { text: data.reply.trim(), offline: false };
     const last = history[history.length - 1]?.text ?? '';
-    return { text: localReply(last, context), offline: true, reason: r.status === 429 ? 'limite' : data?.error ?? `HTTP ${r.status}` };
+    return { text: localReply(last, context), offline: true, reason: r.status === 429 ? 'limite' : `${r.status}${data?.error ? ` · ${String(data.error).slice(0, 80)}` : ''}` };
   } catch (e: any) {
     const last = history[history.length - 1]?.text ?? '';
-    return { text: localReply(last, context), offline: true, reason: e?.name === 'AbortError' ? 'tempo esgotado' : 'sem conexão' };
+    return { text: localReply(last, context), offline: true, reason: e?.name === 'AbortError' ? 'tempo esgotado' : 'sem conexão com o servidor (bloqueado ou fora do ar)' };
   } finally {
     clearTimeout(timer);
   }

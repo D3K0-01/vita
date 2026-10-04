@@ -10,7 +10,7 @@
 
 const env = ((globalThis as any).process?.env ?? {}) as Record<string, string | undefined>;
 
-const MODELS = [env.GEMINI_MODEL, 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash'].filter(Boolean) as string[];
+const MODELS = [env.GEMINI_MODEL, 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-3-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].filter(Boolean) as string[];
 
 const DEFAULT_ORIGINS = ['https://d3k0-01.github.io', 'https://lorenacsilva.github.io', 'http://localhost:8081', 'http://localhost:19006'];
 
@@ -110,6 +110,22 @@ export default async function handler(req: any, res: any) {
   if (!originOk) return res.status(403).json({ error: 'origem não permitida' });
 
   const key = env.GEMINI_API_KEY;
+  // GET /api/chat?test=1 faz uma pergunta curta de verdade e mostra o resultado (diagnóstico)
+  if (req.method === 'GET' && key && String(req.query?.test ?? '') === '1') {
+    const ipT = String(req.headers?.['x-forwarded-for'] ?? '').split(',')[0].trim() || 'anon';
+    if (rateLimited(ipT)) return res.status(429).json({ error: 'muitos testes seguidos; tente em um minuto' });
+    const tried: { model: string; status: number; error: string }[] = [];
+    for (const model of MODELS) {
+      try {
+        const r = await callGemini(model, key, systemPrompt({}), [{ from: 'user', text: 'Diga "olá" em uma frase curta.' }]);
+        if (r.ok) return res.status(200).json({ ok: true, model, reply: r.text, tried });
+        tried.push({ model, status: r.status, error: r.error.slice(0, 200) });
+      } catch (e: any) {
+        tried.push({ model, status: 0, error: String(e?.message ?? e).slice(0, 200) });
+      }
+    }
+    return res.status(502).json({ ok: false, tried });
+  }
   if (req.method === 'GET') return res.status(200).json({ ok: true, configured: Boolean(key) });
   if (req.method !== 'POST') return res.status(405).json({ error: 'método não permitido' });
   if (!key) return res.status(503).json({ error: 'GEMINI_API_KEY não configurada no servidor' });
@@ -142,7 +158,7 @@ export default async function handler(req: any, res: any) {
       if (r.ok) return res.status(200).json({ reply: r.text, model });
       last = { status: r.status, error: r.error };
       // modelo inexistente ou indisponível: tenta o próximo
-      if (![400, 404, 500, 502, 503].includes(r.status)) break;
+      if (![400, 403, 404, 500, 502, 503].includes(r.status)) break;
     } catch (e: any) {
       last = { status: 504, error: e?.name === 'AbortError' ? 'tempo esgotado' : String(e?.message ?? e) };
     }
