@@ -1,7 +1,18 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { defaultTasks, Task, trustedContact as defaultTrustedContact, calmingThings as defaultCalming, phaseTrack } from '../data/mock';
+import {
+  Task,
+  Child,
+  Post,
+  defaultChildren,
+  exampleRoutine,
+  calmingThings as defaultCalming,
+  communityPosts,
+  taskOccursOn,
+} from '../data/mock';
 import { Coupon, Partner, Review, getPartner } from '../data/partners';
+import { TrackProgress, initialTracks, initialConquests } from '../data/tracks';
+import { dateKey } from '../utils/date';
 
 export type Mood = 'tranquilo' | 'agitado' | 'dificil' | null;
 
@@ -10,48 +21,88 @@ export type CrisisAttempt = { id: string; date: string; worked: boolean };
 export type CrisisCategory = 'sensorial' | 'emocional';
 export type CrisisSession = { category: CrisisCategory; step: number } | null;
 
-export type AppState = {
+export type ChatMessage = { id: string; from: 'user' | 'ai'; text: string; date: string; offline?: boolean };
+export type ChatThread = { id: string; title: string; date: string; messages: ChatMessage[] };
+
+export type HealthyBreak = { id: string; label: string; date: string; childId: string };
+
+export type Comment = { id: string; postId: string; text: string; date: string };
+
+export type Prefs = {
+  notifications: Record<string, boolean>;
+  quietHours: boolean;
+  textScale: number; // 0–1
+  reducedStimulus: boolean;
+  noAnimations: boolean;
+};
+
+export type StoredState = {
   hasOnboarded: boolean;
   parentName: string;
-  childName: string;
-  childAge: number;
-  diagnoses: string[];
+  email: string;
+  relation: string;
+  children: Child[];
+  activeChildId: string;
   calmingThings: string[];
   trustedContact: { name: string; relation: string; phone: string } | null;
   tasks: Task[];
   mood: Mood;
+  moodDate: string | null;
   plan: 'base' | 'plus';
-  phase: typeof phaseTrack;
+  tracks: Record<string, TrackProgress>;
+  conquests: { id: string; label: string; date: string }[];
   crisisAttempts: CrisisAttempt[];
-  hasFirstTask: boolean; // false -> Home shows the empty 3b state
   crisisSession: CrisisSession; // set while inside the step guide, cleared on resolution
   simulateOffline: boolean; // Accessibility demo toggle -> Crisis step guide shows the offline variant (5f)
-  phaseAttempts: number; // attempts registered on the current phase step (6b/6c)
+  breaks: HealthyBreak[];
   coupons: Coupon[]; // cupons resgatados — ficam em AsyncStorage para funcionar offline (1d/1h)
   savedPartners: string[]; // parceiros favoritados (1a/1c)
   communityPartners: Partner[]; // locais cadastrados na 1g — sempre sem selo, em análise
   userReviews: Review[]; // relatos escritos pelo usuário (1f)
+  posts: Post[];
+  likedPosts: string[];
+  savedPosts: string[];
+  hiddenPosts: string[];
+  comments: Comment[];
+  joinedGroups: string[];
+  meetings: string[]; // encontros com inscrição
+  chat: ChatMessage[];
+  chatThreads: ChatThread[];
+  prefs: Prefs;
 };
 
-const STORAGE_KEY = 'vita.demo.v1';
+/** Estado exposto às telas: o armazenado + atalhos derivados do filho ativo e do dia. */
+export type AppState = StoredState & {
+  childName: string;
+  childAge: number;
+  diagnoses: string[];
+  activeChild: Child;
+  /** Tarefas do filho ativo que acontecem hoje, com `done` calculado para hoje. */
+  todayTasks: (Task & { done: boolean })[];
+  hasFirstTask: boolean;
+};
 
-const initialState: AppState = {
+const STORAGE_KEY = 'vita.demo.v2';
+
+const initialState: StoredState = {
   hasOnboarded: false,
   parentName: 'Camila',
-  childName: 'Téo',
-  childAge: 7,
-  diagnoses: ['TDAH'],
+  email: '',
+  relation: 'mãe',
+  children: defaultChildren,
+  activeChildId: defaultChildren[0].id,
   calmingThings: defaultCalming,
   trustedContact: null,
   tasks: [],
   mood: null,
+  moodDate: null,
   plan: 'base',
-  phase: phaseTrack,
+  tracks: initialTracks,
+  conquests: initialConquests,
   crisisAttempts: [],
-  hasFirstTask: false,
   crisisSession: null,
   simulateOffline: false,
-  phaseAttempts: 4,
+  breaks: [],
   coupons: [
     {
       id: 'c-jacana',
@@ -77,94 +128,193 @@ const initialState: AppState = {
       codigo: 'VITA-GIR7',
       status: 'usado',
       geradoEm: new Date().toISOString(),
-      validade: 'usado em 12 de agosto',
+      validade: 'já usado',
       avaliado: false,
     },
   ],
   savedPartners: [],
   communityPartners: [],
   userReviews: [],
+  posts: communityPosts,
+  likedPosts: [],
+  savedPosts: [],
+  hiddenPosts: [],
+  comments: [],
+  joinedGroups: [],
+  meetings: [],
+  chat: [],
+  chatThreads: [],
+  prefs: {
+    notifications: { routine: true, phases: true, community: false, news: false },
+    quietHours: true,
+    textScale: 0.4,
+    reducedStimulus: false,
+    noAnimations: false,
+  },
 };
+
+export type TaskInput = Omit<Task, 'id' | 'childId' | 'doneDates'>;
 
 type Ctx = {
   state: AppState;
-  setState: React.Dispatch<React.SetStateAction<AppState>>;
-  toggleTask: (id: string) => void;
-  addTask: (label: string, time: string) => void;
+  setState: React.Dispatch<React.SetStateAction<StoredState>>;
+  toggleTask: (id: string, day?: string) => void;
+  addTask: (task: TaskInput) => void;
+  updateTask: (id: string, patch: Partial<TaskInput>) => void;
+  deleteTask: (id: string) => void;
+  loadExampleRoutine: () => void;
   setMood: (m: Mood) => void;
-  completeOnboarding: (patch?: Partial<AppState>) => void;
+  setActiveChild: (id: string) => void;
+  saveChild: (child: Child) => void;
+  removeChild: (id: string) => void;
+  completeOnboarding: (patch?: Partial<StoredState>) => void;
+  logout: () => void;
   addCrisisAttempt: (worked: boolean) => void;
-  registerPhaseAttempt: (advanced: boolean) => void;
+  registerTrackAttempt: (trackId: string, advanced: boolean, note?: string) => void;
+  startTrack: (trackId: string) => void;
   setCrisisSession: (s: CrisisSession) => void;
+  addBreak: (label: string, date: string) => void;
+  removeBreak: (id: string) => void;
   generateCoupon: (partnerId: string) => Coupon;
   markCouponUsed: (couponId: string) => void;
   markCouponReviewed: (partnerId: string) => void;
   toggleSavedPartner: (partnerId: string) => void;
   addCommunityPartner: (partner: Partner) => void;
   addUserReview: (review: Review) => void;
+  addPost: (body: string, group: string) => void;
+  toggleIn: (key: 'likedPosts' | 'savedPosts' | 'hiddenPosts' | 'joinedGroups' | 'meetings', id: string) => void;
+  addComment: (postId: string, text: string) => void;
+  setPrefs: (patch: Partial<Prefs>) => void;
   resetDemo: () => void;
   loaded: boolean;
 };
 
 const AppCtx = createContext<Ctx | null>(null);
 
+const uid = (p: string) => `${p}${Date.now()}${Math.floor(Math.random() * 1000)}`;
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AppState>(initialState);
+  const [stored, setStored] = useState<StoredState>(initialState);
   const [loaded, setLoaded] = useState(false);
-  const stateRef = useRef(state);
-  stateRef.current = state;
+  const stateRef = useRef(stored);
+  stateRef.current = stored;
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
       .then((raw) => {
-        if (raw) setState({ ...initialState, ...JSON.parse(raw) });
+        if (raw) {
+          const saved = JSON.parse(raw) as Partial<StoredState>;
+          setStored({ ...initialState, ...saved, prefs: { ...initialState.prefs, ...(saved.prefs ?? {}) } });
+        }
       })
+      .catch(() => {})
       .finally(() => setLoaded(true));
   }, []);
 
   useEffect(() => {
     if (!loaded) return;
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
-  }, [state, loaded]);
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(stored)).catch(() => {});
+  }, [stored, loaded]);
 
-  const toggleTask = useCallback((id: string) => {
-    setState((s) => ({ ...s, tasks: s.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)) }));
+  const toggleTask = useCallback((id: string, day: string = dateKey()) => {
+    setStored((s) => ({
+      ...s,
+      tasks: s.tasks.map((t) =>
+        t.id === id
+          ? { ...t, doneDates: t.doneDates.includes(day) ? t.doneDates.filter((d) => d !== day) : [...t.doneDates, day] }
+          : t
+      ),
+    }));
   }, []);
 
-  const addTask = useCallback((label: string, time: string) => {
-    setState((s) => ({
-      ...s,
-      hasFirstTask: true,
-      tasks: [...s.tasks, { id: `t${Date.now()}`, label, time, done: false }],
-    }));
+  const addTask = useCallback((task: TaskInput) => {
+    setStored((s) => ({ ...s, tasks: [...s.tasks, { ...task, id: uid('t'), childId: s.activeChildId, doneDates: [] }] }));
+  }, []);
+
+  const updateTask = useCallback((id: string, patch: Partial<TaskInput>) => {
+    setStored((s) => ({ ...s, tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)) }));
+  }, []);
+
+  const deleteTask = useCallback((id: string) => {
+    setStored((s) => ({ ...s, tasks: s.tasks.filter((t) => t.id !== id) }));
+  }, []);
+
+  const loadExampleRoutine = useCallback(() => {
+    setStored((s) => ({ ...s, tasks: [...s.tasks.filter((t) => t.childId !== s.activeChildId), ...exampleRoutine(s.activeChildId)] }));
   }, []);
 
   const setMood = useCallback((m: Mood) => {
-    setState((s) => ({ ...s, mood: m }));
+    setStored((s) => ({ ...s, mood: m, moodDate: m ? dateKey() : null }));
   }, []);
 
-  const completeOnboarding = useCallback((patch?: Partial<AppState>) => {
-    setState((s) => ({ ...s, hasOnboarded: true, ...patch }));
+  const setActiveChild = useCallback((id: string) => setStored((s) => ({ ...s, activeChildId: id })), []);
+
+  const saveChild = useCallback((child: Child) => {
+    setStored((s) => {
+      const exists = s.children.some((c) => c.id === child.id);
+      return { ...s, children: exists ? s.children.map((c) => (c.id === child.id ? child : c)) : [...s.children, child] };
+    });
   }, []);
+
+  const removeChild = useCallback((id: string) => {
+    setStored((s) => {
+      if (s.children.length <= 1) return s;
+      const remaining = s.children.filter((c) => c.id !== id);
+      return {
+        ...s,
+        children: remaining,
+        tasks: s.tasks.filter((t) => t.childId !== id),
+        activeChildId: s.activeChildId === id ? remaining[0].id : s.activeChildId,
+      };
+    });
+  }, []);
+
+  const completeOnboarding = useCallback((patch?: Partial<StoredState>) => {
+    setStored((s) => ({ ...s, hasOnboarded: true, ...patch }));
+  }, []);
+
+  // Sair da conta: volta para o login, mas os dados continuam salvos no aparelho.
+  const logout = useCallback(() => setStored((s) => ({ ...s, hasOnboarded: false })), []);
 
   const addCrisisAttempt = useCallback((worked: boolean) => {
-    setState((s) => ({
+    setStored((s) => ({ ...s, crisisAttempts: [...s.crisisAttempts, { id: uid('a'), date: new Date().toISOString(), worked }] }));
+  }, []);
+
+  const registerTrackAttempt = useCallback((trackId: string, advanced: boolean, note?: string) => {
+    setStored((s) => {
+      const cur = s.tracks[trackId] ?? { step: 1, attempts: 0, history: [] };
+      const step = Math.max(1, cur.step);
+      const event = { id: uid('h'), date: new Date().toISOString(), phase: step, advanced, note: note?.trim() || undefined };
+      return {
+        ...s,
+        tracks: {
+          ...s.tracks,
+          [trackId]: {
+            ...cur,
+            startedAt: cur.startedAt ?? event.date,
+            step: advanced ? step + 1 : step,
+            attempts: advanced ? 0 : cur.attempts + 1,
+            history: [...cur.history, event],
+          },
+        },
+      };
+    });
+  }, []);
+
+  const startTrack = useCallback((trackId: string) => {
+    setStored((s) => ({
       ...s,
-      crisisAttempts: [...s.crisisAttempts, { id: `a${Date.now()}`, date: new Date().toISOString(), worked }],
+      tracks: { ...s.tracks, [trackId]: { step: 1, attempts: 0, startedAt: new Date().toISOString(), history: s.tracks[trackId]?.history ?? [] } },
     }));
   }, []);
 
-  const registerPhaseAttempt = useCallback((advanced: boolean) => {
-    setState((s) => ({
-      ...s,
-      phaseAttempts: advanced ? 1 : s.phaseAttempts + 1,
-      phase: advanced && s.phase.stepIndex < s.phase.stepTotal ? { ...s.phase, stepIndex: s.phase.stepIndex + 1 } : s.phase,
-    }));
+  const setCrisisSession = useCallback((cs: CrisisSession) => setStored((s) => ({ ...s, crisisSession: cs })), []);
+
+  const addBreak = useCallback((label: string, date: string) => {
+    setStored((s) => ({ ...s, breaks: [...s.breaks, { id: uid('b'), label, date, childId: s.activeChildId }] }));
   }, []);
 
-  const setCrisisSession = useCallback((cs: CrisisSession) => {
-    setState((s) => ({ ...s, crisisSession: cs }));
-  }, []);
+  const removeBreak = useCallback((id: string) => setStored((s) => ({ ...s, breaks: s.breaks.filter((b) => b.id !== id) })), []);
 
   // Um cupom por parceiro: se já existe um ativo, o resgate devolve o mesmo.
   const generateCoupon = useCallback((partnerId: string) => {
@@ -173,7 +323,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const partner = getPartner(partnerId, stateRef.current.communityPartners);
     const coupon: Coupon = {
-      id: `c${Date.now()}`,
+      id: uid('c'),
       partnerId,
       codigo: partner?.beneficio.codigo ?? 'VITA-CUPOM',
       status: 'ativo',
@@ -181,72 +331,117 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       validade: partner?.beneficio.validadeCurta ?? 'sem prazo',
       avaliado: false,
     };
-    setState((s) => ({ ...s, coupons: [coupon, ...s.coupons] }));
+    setStored((s) => ({ ...s, coupons: [coupon, ...s.coupons] }));
     return coupon;
   }, []);
 
   const markCouponUsed = useCallback((couponId: string) => {
-    setState((s) => ({
-      ...s,
-      coupons: s.coupons.map((c) => (c.id === couponId ? { ...c, status: 'usado' as const } : c)),
-    }));
+    setStored((s) => ({ ...s, coupons: s.coupons.map((c) => (c.id === couponId ? { ...c, status: 'usado' as const } : c)) }));
   }, []);
 
   const markCouponReviewed = useCallback((partnerId: string) => {
-    setState((s) => ({
-      ...s,
-      coupons: s.coupons.map((c) => (c.partnerId === partnerId ? { ...c, avaliado: true } : c)),
-    }));
+    setStored((s) => ({ ...s, coupons: s.coupons.map((c) => (c.partnerId === partnerId ? { ...c, avaliado: true } : c)) }));
   }, []);
 
   const toggleSavedPartner = useCallback((partnerId: string) => {
-    setState((s) => ({
+    setStored((s) => ({
       ...s,
-      savedPartners: s.savedPartners.includes(partnerId)
-        ? s.savedPartners.filter((id) => id !== partnerId)
-        : [...s.savedPartners, partnerId],
+      savedPartners: s.savedPartners.includes(partnerId) ? s.savedPartners.filter((id) => id !== partnerId) : [...s.savedPartners, partnerId],
     }));
   }, []);
 
   // Cadastro da 1g: entra sempre como indicado pela comunidade e em análise.
   // O selo "Vita recomenda" só é atribuído pela equipe, após visita presencial.
   const addCommunityPartner = useCallback((partner: Partner) => {
-    setState((s) => ({
-      ...s,
-      communityPartners: [{ ...partner, selo: 'comunidade', emAnalise: true }, ...s.communityPartners],
-    }));
+    setStored((s) => ({ ...s, communityPartners: [{ ...partner, selo: 'comunidade', emAnalise: true }, ...s.communityPartners] }));
   }, []);
 
   const addUserReview = useCallback((review: Review) => {
-    setState((s) => ({
+    setStored((s) => ({
       ...s,
       userReviews: [review, ...s.userReviews],
       coupons: s.coupons.map((c) => (c.partnerId === review.partnerId ? { ...c, avaliado: true } : c)),
     }));
   }, []);
 
+  const addPost = useCallback((body: string, group: string) => {
+    setStored((s) => ({
+      ...s,
+      posts: [
+        { id: uid('p'), group, author: s.parentName, avatar: 'camila', body, likes: 0, comments: 0, createdAt: new Date().toISOString(), mine: true },
+        ...s.posts,
+      ],
+    }));
+  }, []);
+
+  const toggleIn = useCallback((key: 'likedPosts' | 'savedPosts' | 'hiddenPosts' | 'joinedGroups' | 'meetings', id: string) => {
+    setStored((s) => ({ ...s, [key]: s[key].includes(id) ? s[key].filter((x) => x !== id) : [...s[key], id] }));
+  }, []);
+
+  const addComment = useCallback((postId: string, text: string) => {
+    setStored((s) => ({ ...s, comments: [...s.comments, { id: uid('cm'), postId, text, date: new Date().toISOString() }] }));
+  }, []);
+
+  const setPrefs = useCallback((patch: Partial<Prefs>) => setStored((s) => ({ ...s, prefs: { ...s.prefs, ...patch } })), []);
+
   const resetDemo = useCallback(() => {
-    setState(initialState);
+    setStored(initialState);
     AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
   }, []);
 
-  const value = useMemo(
+  const today = dateKey();
+  const state = useMemo<AppState>(() => {
+    const activeChild = stored.children.find((c) => c.id === stored.activeChildId) ?? stored.children[0] ?? defaultChildren[0];
+    const childTasks = stored.tasks.filter((t) => t.childId === activeChild.id);
+    const todayDate = new Date();
+    const todayTasks = childTasks
+      .filter((t) => taskOccursOn(t, todayDate))
+      .sort((a, b) => a.time.localeCompare(b.time))
+      .map((t) => ({ ...t, done: t.doneDates.includes(today) }));
+    return {
+      ...stored,
+      // o check-in de humor vale só para o dia em que foi feito
+      mood: stored.moodDate === today ? stored.mood : null,
+      activeChild,
+      childName: activeChild.name,
+      childAge: activeChild.age,
+      diagnoses: [activeChild.diagnosis],
+      todayTasks,
+      hasFirstTask: childTasks.length > 0,
+    };
+  }, [stored, today]);
+
+  const value = useMemo<Ctx>(
     () => ({
       state,
-      setState,
+      setState: setStored,
       toggleTask,
       addTask,
+      updateTask,
+      deleteTask,
+      loadExampleRoutine,
       setMood,
+      setActiveChild,
+      saveChild,
+      removeChild,
       completeOnboarding,
+      logout,
       addCrisisAttempt,
-      registerPhaseAttempt,
+      registerTrackAttempt,
+      startTrack,
       setCrisisSession,
+      addBreak,
+      removeBreak,
       generateCoupon,
       markCouponUsed,
       markCouponReviewed,
       toggleSavedPartner,
       addCommunityPartner,
       addUserReview,
+      addPost,
+      toggleIn,
+      addComment,
+      setPrefs,
       resetDemo,
       loaded,
     }),
@@ -255,17 +450,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       loaded,
       toggleTask,
       addTask,
+      updateTask,
+      deleteTask,
+      loadExampleRoutine,
       setMood,
+      setActiveChild,
+      saveChild,
+      removeChild,
       completeOnboarding,
+      logout,
       addCrisisAttempt,
-      registerPhaseAttempt,
+      registerTrackAttempt,
+      startTrack,
       setCrisisSession,
+      addBreak,
+      removeBreak,
       generateCoupon,
       markCouponUsed,
       markCouponReviewed,
       toggleSavedPartner,
       addCommunityPartner,
       addUserReview,
+      addPost,
+      toggleIn,
+      addComment,
+      setPrefs,
       resetDemo,
     ]
   );
@@ -278,5 +487,3 @@ export function useApp() {
   if (!ctx) throw new Error('useApp must be used within AppProvider');
   return ctx;
 }
-
-export { defaultTasks };

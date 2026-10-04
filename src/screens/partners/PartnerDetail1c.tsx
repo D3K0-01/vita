@@ -57,7 +57,7 @@ export default function PartnerDetail1c({ navigation, route }: any) {
             onPress={() => navigation.goBack()}
             accessibilityRole="button"
             accessibilityLabel="Voltar"
-            style={{ width: 38, height: 38, borderRadius: 13, backgroundColor: alpha(colors.darkAzure, 0.5), alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: alpha(colors.darkAzure, 0.5), alignItems: 'center', justifyContent: 'center' }}
           >
             <ChevronLeft size={20} color={colors.white} strokeWidth={2} />
           </Pressable>
@@ -65,7 +65,7 @@ export default function PartnerDetail1c({ navigation, route }: any) {
             onPress={() => toggleSavedPartner(partner.id)}
             accessibilityRole="button"
             accessibilityLabel={salvo ? 'Remover dos salvos' : 'Salvar parceiro'}
-            style={{ width: 38, height: 38, borderRadius: 13, backgroundColor: alpha(colors.darkAzure, 0.5), alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: alpha(colors.darkAzure, 0.5), alignItems: 'center', justifyContent: 'center' }}
           >
             <Bookmark size={19} color={colors.white} fill={salvo ? colors.white : 'transparent'} strokeWidth={1.9} />
           </Pressable>

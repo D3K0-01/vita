@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "vita-app",
+    "name": "Vita",
     "slug": "vita-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -21,7 +21,12 @@
     "web": {
       "favicon": "./assets/favicon.png",
       "output": "single",
-      "bundler": "metro"
+      "bundler": "metro",
+      "name": "Vita",
+      "shortName": "Vita",
+      "themeColor": "#2E4B52",
+      "backgroundColor": "#F2EFE6",
+      "description": "Rotina leve, Modo Crise e pequenos avanços para famílias de crianças neurodivergentes."
     },
     "experiments": {
       "baseUrl": "/vita"

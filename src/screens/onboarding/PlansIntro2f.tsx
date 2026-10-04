@@ -10,7 +10,7 @@ import { useApp } from '../../state/AppContext';
 
 export default function PlansIntro2f() {
   const { palette, colors, gradients, type, radii } = useTheme();
-  const { completeOnboarding } = useApp();
+  const { state, completeOnboarding } = useApp();
 
   const Feature = ({ text }: { text: string }) => (
     <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
@@ -22,7 +22,7 @@ export default function PlansIntro2f() {
   return (
     <OnboardingShell
       step={7}
-      title="Tudo pronto, Camila"
+      title={`Tudo pronto, ${state.parentName}`}
       subtitle="Você já pode entrar. Escolha o plano quando quiser."
       footer={
         <>

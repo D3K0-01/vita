@@ -1,5 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Welcome2a from '../screens/onboarding/Welcome2a';
 import Login2b from '../screens/onboarding/Login2b';
 import WhoAreYou2c from '../screens/onboarding/WhoAreYou2c';
 import AboutChild2d from '../screens/onboarding/AboutChild2d';
@@ -12,6 +13,7 @@ const Stack = createNativeStackNavigator();
 export function OnboardingNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Welcome2a" component={Welcome2a} />
       <Stack.Screen name="Login2b" component={Login2b} />
       <Stack.Screen name="WhoAreYou2c" component={WhoAreYou2c} />
       <Stack.Screen name="AboutChild2d" component={AboutChild2d} />

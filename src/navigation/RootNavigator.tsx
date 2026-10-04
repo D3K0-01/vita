@@ -8,6 +8,8 @@ import { TrackingNavigator } from './TrackingNavigator';
 import { PlansNavigator } from './PlansNavigator';
 import NewTask4d from '../screens/routine/NewTask4d';
 import LockScreenReminder4e from '../screens/routine/LockScreenReminder4e';
+import Breathing from '../screens/wellbeing/Breathing';
+import Article from '../screens/community/Article';
 import { useApp } from '../state/AppContext';
 
 const Stack = createNativeStackNavigator();
@@ -16,7 +18,7 @@ export function RootNavigator() {
   const { state } = useApp();
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: state.prefs.noAnimations ? 'none' : 'default' }}>
       {!state.hasOnboarded ? (
         <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
       ) : (
@@ -28,6 +30,8 @@ export function RootNavigator() {
           <Stack.Screen name="SettingsStack" component={SettingsNavigator} options={{ presentation: 'card' }} />
           <Stack.Screen name="TrackingStack" component={TrackingNavigator} options={{ presentation: 'card' }} />
           <Stack.Screen name="PlansStack" component={PlansNavigator} options={{ presentation: 'card' }} />
+          <Stack.Screen name="Breathing" component={Breathing} options={{ presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="Article" component={Article} />
         </>
       )}
     </Stack.Navigator>

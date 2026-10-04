@@ -10,8 +10,13 @@ export function ScreenHeader({ step, total = 7, onBack }: { step: number; total?
   const { palette } = useTheme();
   const navigation = useNavigation();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 24, paddingTop: 14 }}>
-      <Pressable onPress={onBack ?? (() => navigation.canGoBack() && navigation.goBack())} hitSlop={12}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 24, paddingTop: 6 }}>
+      <Pressable
+        onPress={onBack ?? (() => navigation.canGoBack() && navigation.goBack())}
+        accessibilityRole="button"
+        accessibilityLabel="Voltar"
+        style={{ width: 44, height: 44, marginLeft: -12, alignItems: 'center', justifyContent: 'center' }}
+      >
         <ChevronLeft size={22} color={palette.text} strokeWidth={2} />
       </Pressable>
       <ProgressBar progress={step / total} />

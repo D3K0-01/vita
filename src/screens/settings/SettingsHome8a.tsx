@@ -1,32 +1,48 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, Pressable } from 'react-native';
+import { ChevronRight, Plus, LogOut } from 'lucide-react-native';
 import { useTheme } from '../../theme/ThemeProvider';
+import { ScreenContainer } from '../../components/ScreenContainer';
+import { BackHeader } from '../../components/BackHeader';
 import { Avatar } from '../../components/Avatar';
+import { useUI } from '../../components/UIProvider';
 import { useApp } from '../../state/AppContext';
 
-function Row({ title, sub, onPress, last }: { title: string; sub?: string; onPress?: () => void; last?: boolean }) {
+function Row({ title, sub, onPress, first }: { title: string; sub?: string; onPress: () => void; first?: boolean }) {
   const { palette, type } = useTheme();
   return (
     <Pressable
       onPress={onPress}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 15, paddingHorizontal: 17, borderTopWidth: last === undefined ? 1 : last ? 1 : 1, borderTopColor: palette.divider }}
+      accessibilityRole="button"
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+        minHeight: 56,
+        paddingVertical: 13,
+        paddingHorizontal: 17,
+        borderTopWidth: first ? 0 : 1,
+        borderTopColor: palette.divider,
+        backgroundColor: pressed ? palette.chipSelectedBg : 'transparent',
+      })}
     >
       <View style={{ flex: 1 }}>
-        <Text style={[type.body, { fontSize: 14, color: palette.text }]}>{title}</Text>
-        {sub ? <Text style={[type.caption, { fontSize: 11, color: palette.textFaint, opacity: 0.85, marginTop: 2 }]}>{sub}</Text> : null}
+        <Text style={[type.body, { fontSize: 14.5, color: palette.text }]}>{title}</Text>
+        {sub ? <Text style={[type.caption, { fontSize: 11.5, color: palette.textFaint, marginTop: 2 }]}>{sub}</Text> : null}
       </View>
       <ChevronRight size={16} color={palette.hint} />
     </Pressable>
   );
 }
 
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
+function Section({ label, right, children }: { label: string; right?: React.ReactNode; children: React.ReactNode }) {
   const { palette, type } = useTheme();
   return (
     <View>
-      <Text style={[type.eyebrow, { color: palette.hint, marginBottom: 9 }]}>{label}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, minHeight: 28 }}>
+        <Text style={[type.eyebrow, { color: palette.hint }]}>{label}</Text>
+        {right}
+      </View>
       <View style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 16, overflow: 'hidden' }}>{children}</View>
     </View>
   );
@@ -34,93 +50,108 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 
 export default function SettingsHome8a({ navigation }: any) {
   const { palette, colors, type } = useTheme();
-  const { state } = useApp();
+  const { state, logout } = useApp();
+  const { confirm } = useUI();
+
+  const signOut = async () => {
+    if (await confirm({ title: 'Sair da conta?', message: 'Seus dados continuam salvos neste aparelho para quando você voltar.', confirmLabel: 'Sair' })) logout();
+  };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top', 'bottom']}>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 40, gap: 18 }}>
-        <Pressable onPress={() => navigation.getParent()?.goBack()} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <ChevronLeft size={20} color={palette.text} strokeWidth={2} />
-          <Text style={[type.cardTitle, { color: palette.text, fontSize: 15 }]}>Perfil e ajustes</Text>
-        </Pressable>
+    <ScreenContainer edges={['top', 'bottom']} contentStyle={{ paddingHorizontal: 20, paddingTop: 4, gap: 18 }}>
+      <BackHeader title="Perfil e ajustes" onBack={() => navigation.getParent()?.goBack()} />
 
-        <View style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 18, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <Avatar person="camila" name={state.parentName} size={48} />
-          <View style={{ flex: 1 }}>
-            <Text style={[type.title, { color: palette.text, fontSize: 20 }]}>{state.parentName}</Text>
-            <Text style={[type.caption, { fontSize: 12, color: palette.textMuted, opacity: 0.75, marginTop: 2 }]}>camila@email.com · plano {state.plan === 'plus' ? 'Plus' : 'Base'}</Text>
-          </View>
-          <ChevronRight size={16} color={palette.hint} />
+      <Pressable
+        onPress={() => navigation.navigate('EditProfile')}
+        accessibilityRole="button"
+        style={({ pressed }) => ({ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 18, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14, opacity: pressed ? 0.8 : 1 })}
+      >
+        <Avatar person="camila" name={state.parentName} size={50} />
+        <View style={{ flex: 1 }}>
+          <Text style={[type.title, { color: palette.text, fontSize: 20 }]}>{state.parentName}</Text>
+          <Text style={[type.caption, { fontSize: 12, color: palette.textMuted, marginTop: 2 }]} numberOfLines={1}>
+            {state.email || 'e-mail não informado'} · plano {state.plan === 'plus' ? 'Plus' : 'Base'}
+          </Text>
         </View>
+        <ChevronRight size={16} color={palette.hint} />
+      </Pressable>
 
-        <Section label="Conta">
-          <Row title="Nome e e-mail" />
-          <Row title="Senha e acesso" />
-          <Row title="Contato de confiança" sub={state.trustedContact ? `${state.trustedContact.name} · ${state.trustedContact.relation} · usado no Modo Crise` : 'nenhum contato salvo ainda'} />
-        </Section>
+      <Section label="Conta">
+        <Row first title="Nome e e-mail" onPress={() => navigation.navigate('EditProfile')} />
+        <Row title="Senha e acesso" onPress={() => navigation.navigate('Security')} />
+        <Row
+          title="Contato de confiança"
+          sub={state.trustedContact ? `${state.trustedContact.name} · ${state.trustedContact.relation} · usado no Modo Crise` : 'nenhum contato salvo ainda'}
+          onPress={() => navigation.navigate('TrustedContactEdit')}
+        />
+      </Section>
 
-        <View>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 9 }}>
-            <Text style={[type.eyebrow, { color: palette.hint }]}>Filhos</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Plus size={12} color={colors.accent2} strokeWidth={2} />
-              <Text style={[type.bodySm, { fontSize: 12, color: colors.accent2, fontFamily: 'Lexend_500Medium' }]}>adicionar</Text>
-            </View>
-          </View>
-          <View style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 16, overflow: 'hidden' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 15 }}>
-              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: colors.pastelGreen, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontFamily: 'BricolageGrotesque_600SemiBold', fontSize: 13, color: colors.darkAzure }}>T</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[type.body, { fontSize: 14.5, color: palette.text }]}>{state.childName}</Text>
-                <Text style={[type.caption, { fontSize: 11, color: palette.textFaint, opacity: 0.85, marginTop: 2 }]}>{state.childAge} anos · {state.diagnoses[0] ?? '—'}</Text>
-              </View>
-              <ChevronRight size={16} color={palette.hint} />
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 15, borderTopWidth: 1, borderTopColor: palette.divider }}>
-              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: colors.greyAzure + '4D', alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontFamily: 'BricolageGrotesque_600SemiBold', fontSize: 13, color: colors.darkAzure }}>L</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[type.body, { fontSize: 14.5, color: palette.text }]}>Lia</Text>
-                <Text style={[type.caption, { fontSize: 11, color: palette.textFaint, opacity: 0.85, marginTop: 2 }]}>12 anos · em investigação</Text>
-              </View>
-              <ChevronRight size={16} color={palette.hint} />
-            </View>
-          </View>
-        </View>
-
-        <Section label="Preferências">
-          <Row title="Notificações" sub="rotina, comunidade, lembretes" onPress={() => navigation.navigate('Notifications8b')} />
-          <Row title="Acessibilidade" sub="tamanho do texto, estímulo visual reduzido" onPress={() => navigation.navigate('Accessibility8c')} />
-        </Section>
-
-        <View>
-          <Text style={[type.eyebrow, { color: palette.hint, marginBottom: 9 }]}>Assinatura</Text>
-          <Pressable
-            onPress={() => navigation.navigate('PlansStack')}
-            style={{ backgroundColor: colors.pastelGreen, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={[type.cardTitle, { color: colors.darkAzure, fontSize: 15 }]}>Plano atual: {state.plan === 'plus' ? 'Plus' : 'Base'}</Text>
-              <Text style={[type.caption, { fontSize: 11.5, color: colors.darkAzure, opacity: 0.75, marginTop: 3 }]}>ver planos e o que muda no Plus</Text>
-            </View>
-            <ChevronRight size={16} color={colors.darkAzure} />
+      <Section
+        label="Filhos"
+        right={
+          <Pressable onPress={() => navigation.navigate('EditChild')} accessibilityRole="button" hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 }}>
+            <Plus size={13} color={colors.accent2} strokeWidth={2.2} />
+            <Text style={[type.bodySm, { fontSize: 12.5, color: colors.accent2, fontFamily: 'Lexend_500Medium' }]}>adicionar</Text>
           </Pressable>
-        </View>
+        }
+      >
+        {state.children.map((c, i) => (
+          <Pressable
+            key={c.id}
+            onPress={() => navigation.navigate('EditChild', { id: c.id })}
+            accessibilityRole="button"
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 15, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: palette.divider, backgroundColor: pressed ? palette.chipSelectedBg : 'transparent' })}
+          >
+            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: i % 2 ? '#D5E1E5' : colors.pastelGreen, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontFamily: 'BricolageGrotesque_600SemiBold', fontSize: 14, color: colors.darkAzure }}>{c.name.charAt(0).toUpperCase()}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[type.body, { fontSize: 14.5, color: palette.text }]}>
+                {c.name}
+                {c.id === state.activeChildId ? '  ·  ativo' : ''}
+              </Text>
+              <Text style={[type.caption, { fontSize: 11.5, color: palette.textFaint, marginTop: 2 }]}>
+                {c.age} anos · {c.diagnosis}
+              </Text>
+            </View>
+            <ChevronRight size={16} color={palette.hint} />
+          </Pressable>
+        ))}
+      </Section>
 
-        <Section label="Sobre">
-          <Row title="Privacidade e seus dados (LGPD)" />
-          <Row title="Central de ajuda" />
-          <Row title="Falar com o suporte" />
-        </Section>
+      <Section label="Preferências">
+        <Row first title="Notificações" sub="rotina, comunidade, lembretes" onPress={() => navigation.navigate('Notifications8b')} />
+        <Row title="Acessibilidade" sub="tamanho do texto, contraste, modo escuro" onPress={() => navigation.navigate('Accessibility8c')} />
+      </Section>
 
-        <View style={{ alignItems: 'center', marginTop: 6 }}>
-          <Text style={[type.body, { fontSize: 14, color: palette.text, opacity: 0.75 }]}>Sair da conta</Text>
-          <Text style={[type.caption, { fontSize: 11, color: palette.textFaint, opacity: 0.7, marginTop: 8 }]}>versão 1.0 · seus dados continuam salvos</Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <View>
+        <Text style={[type.eyebrow, { color: palette.hint, marginBottom: 6 }]}>Assinatura</Text>
+        <Pressable
+          onPress={() => navigation.navigate('PlansStack')}
+          accessibilityRole="button"
+          style={({ pressed }) => ({ backgroundColor: colors.pastelGreen, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.85 : 1 })}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={[type.cardTitle, { color: colors.darkAzure, fontSize: 15 }]}>Plano atual: {state.plan === 'plus' ? 'Plus' : 'Base'}</Text>
+            <Text style={[type.caption, { fontSize: 11.5, color: colors.darkAzure, opacity: 0.8, marginTop: 3 }]}>ver planos e o que muda no Plus</Text>
+          </View>
+          <ChevronRight size={16} color={colors.darkAzure} />
+        </Pressable>
+      </View>
+
+      <Section label="Sobre">
+        <Row first title="Privacidade e seus dados (LGPD)" onPress={() => navigation.navigate('Privacy')} />
+        <Row title="Central de ajuda" onPress={() => navigation.navigate('Help')} />
+        <Row title="Falar com o suporte" onPress={() => navigation.navigate('Support')} />
+      </Section>
+
+      <View style={{ alignItems: 'center', marginTop: 4 }}>
+        <Pressable onPress={signOut} accessibilityRole="button" style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, paddingHorizontal: 16, opacity: pressed ? 0.6 : 1 })}>
+          <LogOut size={16} color={palette.text} />
+          <Text style={[type.body, { fontSize: 14, color: palette.text }]}>Sair da conta</Text>
+        </Pressable>
+        <Text style={[type.caption, { fontSize: 11, color: palette.textFaint, marginTop: 4 }]}>versão 1.1 · seus dados continuam salvos</Text>
+      </View>
+    </ScreenContainer>
   );
 }

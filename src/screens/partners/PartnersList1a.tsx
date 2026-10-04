@@ -33,7 +33,7 @@ export default function PartnersList1a({ navigation }: any) {
     });
 
   return (
-    <ScreenContainer contentStyle={{ paddingTop: 14, gap: 16, paddingBottom: 190 }}>
+    <ScreenContainer floating={<SOSButton />} contentStyle={{ paddingTop: 10, gap: 16 }}>
       <View style={{ paddingHorizontal: 20, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <View style={{ flex: 1 }}>
           <Text style={[type.title, { color: palette.text }]}>Parceiros</Text>
@@ -48,7 +48,7 @@ export default function PartnersList1a({ navigation }: any) {
             accessibilityRole="button"
             accessibilityLabel="Ver parceiros no mapa"
             onPress={() => navigation.navigate('PartnersMap1e')}
-            style={{ width: 38, height: 38, borderRadius: 13, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, alignItems: 'center', justifyContent: 'center' }}
           >
             <MapPin size={18} color={palette.text} strokeWidth={1.9} />
           </Pressable>
@@ -56,7 +56,7 @@ export default function PartnersList1a({ navigation }: any) {
             accessibilityRole="button"
             accessibilityLabel="Meus cupons"
             onPress={() => navigation.navigate('MyCoupons1h')}
-            style={{ width: 38, height: 38, borderRadius: 13, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, alignItems: 'center', justifyContent: 'center' }}
           >
             <Ticket size={18} color={palette.text} strokeWidth={1.9} />
           </Pressable>
@@ -133,7 +133,7 @@ export default function PartnersList1a({ navigation }: any) {
         <View style={{ paddingHorizontal: 20, gap: 10 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 4 }}>
             <Text style={[type.cardTitle, { fontSize: 16, color: palette.text }]}>Indicados pela comunidade</Text>
-            <Text style={[type.caption, { fontSize: 12.5, color: colors.accent2 }]}>ver todos</Text>
+            <Text style={[type.caption, { fontSize: 12.5, color: palette.textFaint }]}>{comunidade.length} {comunidade.length === 1 ? 'lugar' : 'lugares'}</Text>
           </View>
           {comunidade.map((p) => (
             <PartnerCard
@@ -152,7 +152,7 @@ export default function PartnersList1a({ navigation }: any) {
           <Text style={[type.bodySm, { fontSize: 13, lineHeight: 20, color: palette.textMuted }]}>
             Tente aumentar a distância ou tirar uma das adaptações — a lista volta a crescer.
           </Text>
-          <Pressable onPress={() => navigation.navigate('Filters1b')}>
+          <Pressable onPress={() => navigation.navigate('Filters1b')} hitSlop={10} style={{ alignSelf: 'flex-start', paddingVertical: 4 }}>
             <Text style={[type.bodySm, { fontSize: 13, color: colors.accent2, fontFamily: 'Lexend_500Medium' }]}>Ajustar filtros</Text>
           </Pressable>
         </View>
@@ -162,12 +162,11 @@ export default function PartnersList1a({ navigation }: any) {
         <Text style={[type.caption, { fontSize: 12, color: palette.textFaint, textAlign: 'center' }]}>
           Conhece um lugar que adapta de verdade?
         </Text>
-        <Pressable onPress={() => navigation.navigate('BecomePartner1g')}>
+        <Pressable onPress={() => navigation.navigate('BecomePartner1g')} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12 }}>
           <Text style={[type.bodySm, { fontSize: 13, color: colors.accent2, fontFamily: 'Lexend_500Medium' }]}>Indique ou seja parceiro</Text>
         </Pressable>
       </View>
 
-      <SOSButton />
     </ScreenContainer>
   );
 }

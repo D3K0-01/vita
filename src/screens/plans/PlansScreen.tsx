@@ -5,6 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { Button } from '../../components/Button';
 import { useApp } from '../../state/AppContext';
+import { BackHeader } from '../../components/BackHeader';
+import { useUI } from '../../components/UIProvider';
 
 const FEATURES = [
   { cat: 'Rotina', base: 'tarefas ilimitadas, para cada filho', plus: 'quebras saudáveis de rotina programadas' },
@@ -28,23 +30,38 @@ const BASE_BULLETS = ['Rotina · tarefas ilimitadas', 'Modo Crise · completo e 
 
 export default function PlansScreen({ navigation }: any) {
   const { palette, colors, type, radii } = useTheme();
-  const { state } = useApp();
+  const { state, setState } = useApp();
+  const { confirm, toast } = useUI();
+  const cancelPlus = async () => {
+    if (await confirm({ title: 'Cancelar o Plus?', message: 'Você volta para o Base, que continua gratuito para sempre. Nada do que foi registrado se perde.', confirmLabel: 'Voltar para o Base', destructive: true })) {
+      setState((s) => ({ ...s, plan: 'base' }));
+      toast('Plano alterado para Base');
+    }
+  };
   const [mode, setMode] = useState<'tabela' | 'cards'>('tabela');
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top', 'bottom']}>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 40, gap: 18 }}>
-        <Pressable onPress={() => navigation.getParent()?.goBack()} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <ChevronLeft size={20} color={palette.text} strokeWidth={2} />
-          <Text style={[type.title, { color: palette.text, fontSize: 22 }]}>Planos</Text>
-        </Pressable>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 40, gap: 18 }}>
+        <BackHeader title="Planos" onBack={() => navigation.getParent()?.goBack()} />
+        {state.plan === 'plus' && (
+          <View style={{ backgroundColor: colors.pastelGreen, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={[type.cardTitle, { color: colors.darkAzure, fontSize: 15.5 }]}>Você está no Plus</Text>
+              <Text style={[type.caption, { color: colors.darkAzure, opacity: 0.8, marginTop: 2 }]}>obrigada por apoiar o Vita</Text>
+            </View>
+            <Pressable onPress={cancelPlus} accessibilityRole="button" style={{ paddingVertical: 10, paddingLeft: 8 }}>
+              <Text style={[type.bodySm, { color: colors.darkAzure, fontFamily: 'Lexend_500Medium', textDecorationLine: 'underline' }]}>cancelar</Text>
+            </Pressable>
+          </View>
+        )}
         <Text style={[type.body, { color: palette.textMuted, fontSize: 13.5, opacity: 0.75, lineHeight: 21 }]}>
           O Base continua funcionando para sempre. O Plus só amplia o que você já usa.
         </Text>
 
         <View style={{ flexDirection: 'row', backgroundColor: colors.greyAzure + '29', borderRadius: 14, padding: 4 }}>
           {(['tabela', 'cards'] as const).map((m) => (
-            <Pressable key={m} onPress={() => setMode(m)} style={{ flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: 11, backgroundColor: mode === m ? palette.surface : 'transparent' }}>
+            <Pressable key={m} onPress={() => setMode(m)} accessibilityRole="tab" accessibilityState={{ selected: mode === m }} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 11, backgroundColor: mode === m ? palette.surface : 'transparent' }}>
               <Text style={[type.bodySm, { fontSize: 13.5, color: palette.text }]}>{m}</Text>
             </Pressable>
           ))}
@@ -66,7 +83,7 @@ export default function PlansScreen({ navigation }: any) {
                   </View>
                 </View>
                 <Text style={[type.bodySm, { color: colors.offWhite, fontSize: 13, marginTop: 4 }]}>R$ 39,90</Text>
-                <Text style={{ fontFamily: 'Lexend_300Light', fontSize: 10.5, lineHeight: 14, color: colors.offWhite, opacity: 0.7, marginTop: 6 }}>por mês · cancela quando quiser</Text>
+                <Text style={{ fontFamily: 'Lexend_300Light', fontSize: 10.5, lineHeight: 14, color: colors.offWhite, opacity: 0.8, marginTop: 6 }}>{state.plan === 'plus' ? 'seu plano atual' : 'por mês · cancela quando quiser'}</Text>
               </View>
             </View>
 
@@ -101,7 +118,7 @@ export default function PlansScreen({ navigation }: any) {
                   </View>
                 ))}
               </View>
-              <Pressable onPress={() => navigation.navigate('Checkout10c')} style={{ backgroundColor: '#fff', borderRadius: radii.pill, paddingVertical: 15, alignItems: 'center', marginTop: 22 }}>
+              <Pressable onPress={() => (state.plan === 'plus' ? toast('Você já está no Plus') : navigation.navigate('Checkout10c'))} accessibilityRole="button" style={{ backgroundColor: '#fff', borderRadius: radii.pill, paddingVertical: 15, alignItems: 'center', marginTop: 22 }}>
                 <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 15, color: colors.darkAzure }}>Começar teste grátis</Text>
               </Pressable>
             </View>
@@ -133,9 +150,9 @@ export default function PlansScreen({ navigation }: any) {
 
         {mode === 'tabela' && (
           <View style={{ gap: 12 }}>
-            <Button label="Começar teste grátis do Plus" onPress={() => navigation.navigate('Checkout10c')} />
-            <Pressable onPress={() => navigation.getParent()?.goBack()}>
-              <Text style={{ fontFamily: 'Lexend_400Regular', fontSize: 13.5, color: palette.textMuted, opacity: 0.7, textAlign: 'center' }}>Seguir no plano Base</Text>
+            {state.plan === 'base' ? <Button label="Começar teste grátis do Plus" onPress={() => navigation.navigate('Checkout10c')} /> : null}
+            <Pressable onPress={() => navigation.getParent()?.goBack()} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
+              <Text style={{ fontFamily: 'Lexend_400Regular', fontSize: 13.5, color: palette.textMuted, textAlign: 'center' }}>{state.plan === 'base' ? 'Seguir no plano Base' : 'Voltar'}</Text>
             </Pressable>
           </View>
         )}

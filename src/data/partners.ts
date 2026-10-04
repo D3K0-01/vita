@@ -107,8 +107,10 @@ export type Partner = {
   abertoAgora: boolean;
   testemunhoDestaque?: { texto: string; autor: string; relacao: string; idadeCrianca: number; condicao: string };
   subnotas?: { acolhimento: number; ruidoReal: number; espera: number };
-  /** Posição relativa (0–1) no mapa da 1e — protótipo, sem geolocalização real. */
+  /** Posição relativa (0–1) usada pelo mapa ilustrado antigo. Mantida por compatibilidade. */
   mapa: { x: number; y: number };
+  /** Coordenadas reais aproximadas do endereço de exemplo, usadas no Google Maps (1e). */
+  coords?: { lat: number; lng: number };
   /** Cadastros vindos da 1g ficam em análise até a visita da equipe. */
   emAnalise?: boolean;
 };
@@ -207,6 +209,7 @@ export const partners: Partner[] = [
     },
     subnotas: { acolhimento: 4.9, ruidoReal: 3.7, espera: 4.5 },
     mapa: { x: 0.44, y: 0.46 },
+    coords: { lat: -23.5598, lng: -46.6822 },
   },
   {
     id: 'buffet-girassol',
@@ -245,6 +248,7 @@ export const partners: Partner[] = [
     abertoAgora: true,
     subnotas: { acolhimento: 4.7, ruidoReal: 3.9, espera: 4.4 },
     mapa: { x: 0.7, y: 0.26 },
+    coords: { lat: -23.5372, lng: -46.6735 },
   },
   {
     id: 'clinica-jacana',
@@ -282,6 +286,7 @@ export const partners: Partner[] = [
     abertoAgora: false,
     subnotas: { acolhimento: 5, ruidoReal: 4.6, espera: 4.8 },
     mapa: { x: 0.63, y: 0.83 },
+    coords: { lat: -23.5642, lng: -46.6779 },
   },
   {
     id: 'estudio-mare',
@@ -318,6 +323,7 @@ export const partners: Partner[] = [
     horarioFuncionamento: 'Terça a sábado, 10h às 18h',
     abertoAgora: true,
     mapa: { x: 0.26, y: 0.72 },
+    coords: { lat: -23.5547, lng: -46.6713 },
   },
   {
     id: 'cine-aurora',
@@ -354,6 +360,7 @@ export const partners: Partner[] = [
     horarioFuncionamento: 'Todos os dias, 13h às 22h',
     abertoAgora: false,
     mapa: { x: 0.8, y: 0.56 },
+    coords: { lat: -23.5607, lng: -46.665 },
   },
 ];
 

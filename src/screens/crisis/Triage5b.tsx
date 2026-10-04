@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { X, ChevronRight, TriangleAlert } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -10,6 +10,7 @@ function Option({ title, sub, onPress, inverted }: { title: string; sub: string;
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
       style={{
         backgroundColor: inverted ? colors.offWhite : 'rgba(242,239,230,.1)',
         borderWidth: inverted ? 0 : 1,
@@ -25,7 +26,7 @@ function Option({ title, sub, onPress, inverted }: { title: string; sub: string;
       {inverted && <TriangleAlert size={24} color={colors.darkAzure} strokeWidth={2} />}
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 21, color: inverted ? colors.darkAzure : colors.offWhite }}>{title}</Text>
-        <Text style={{ fontFamily: 'Lexend_300Light', fontSize: 13, color: inverted ? colors.darkAzure : colors.offWhite, opacity: 0.7, marginTop: 4 }}>{sub}</Text>
+        <Text style={{ fontFamily: 'Lexend_300Light', fontSize: 13, color: inverted ? colors.darkAzure : colors.offWhite, opacity: 0.75, marginTop: 4 }}>{sub}</Text>
       </View>
       <ChevronRight size={20} color={inverted ? colors.darkAzure : colors.offWhite} strokeWidth={2} />
     </Pressable>
@@ -37,13 +38,18 @@ export default function Triage5b({ navigation }: any) {
   const { setCrisisSession } = useApp();
 
   const startGuide = (category: 'sensorial' | 'emocional') => {
-    setCrisisSession({ category, step: 2 });
+    setCrisisSession({ category, step: 1 });
     navigation.navigate('StepGuide5c', { category });
+  };
+
+  const toChat = () => {
+    // voltar para "Main" fecha o modal do Modo Crise e abre a aba da IA
+    navigation.getParent()?.navigate('Main', { screen: 'IATab' });
   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.darkAzure }} edges={['top', 'bottom']}>
-      <View style={{ flex: 1, paddingHorizontal: 22, paddingTop: 8, gap: 22 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 22, paddingTop: 8, paddingBottom: 12, gap: 20 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: colors.offWhite, alignItems: 'center', justifyContent: 'center' }}>
@@ -51,7 +57,7 @@ export default function Triage5b({ navigation }: any) {
             </View>
             <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 16, color: colors.offWhite }}>Modo Crise</Text>
           </View>
-          <Pressable onPress={() => navigation.getParent()?.goBack()} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Pressable onPress={() => navigation.getParent()?.goBack()} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 48, paddingLeft: 12 }}>
             <Text style={{ fontFamily: 'Lexend_400Regular', fontSize: 13, color: colors.offWhite, opacity: 0.75 }}>fechar</Text>
             <X size={18} color={colors.offWhite} strokeWidth={2} />
           </Pressable>
@@ -65,7 +71,7 @@ export default function Triage5b({ navigation }: any) {
         <View style={{ gap: 12 }}>
           <Option title="Crise sensorial" sub="sobrecarga, som, luz, toque" onPress={() => startGuide('sensorial')} />
           <Option title="Explosão emocional" sub="birra, choro, desregulação" onPress={() => startGuide('emocional')} />
-          <Option title="Dúvida urgente" sub="não é crise · vai para o chat" onPress={() => navigation.getParent()?.goBack()} />
+          <Option title="Dúvida urgente" sub="não é crise · vai para o chat" onPress={toChat} />
           <Option title="Risco à segurança" sub="contatos de emergência agora" inverted onPress={() => navigation.navigate('Safety5d')} />
         </View>
 
@@ -74,13 +80,14 @@ export default function Triage5b({ navigation }: any) {
             Você está cuidando de alguém e de você. Uma coisa por vez.
           </Text>
           <Pressable
-            onPress={() => navigation.getParent()?.goBack()}
+            onPress={toChat}
+            accessibilityRole="button"
             style={{ borderWidth: 1.5, borderColor: 'rgba(242,239,230,.3)', borderRadius: 30, padding: 16, alignItems: 'center' }}
           >
             <Text style={{ fontFamily: 'Lexend_400Regular', fontSize: 14, color: colors.offWhite }}>Só quero conversar</Text>
           </Pressable>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

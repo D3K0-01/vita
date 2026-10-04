@@ -1,18 +1,32 @@
 import React, { useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
-import { OnboardingShell, FieldLabel, TextInputLike } from './OnboardingShell';
 import { Button } from '../../components/Button';
-import { Chip } from '../../components/Chip';
 import { Card } from '../../components/Card';
+import { Chip } from '../../components/Chip';
+import { TextField } from '../../components/TextField';
+import { useApp } from '../../state/AppContext';
+import { OnboardingShell, FieldLabel } from './OnboardingShell';
 
 const VINCULOS = ['mãe', 'pai', 'responsável legal', 'outro'];
 const DIAGNOSTICOS = ['TDAH', 'TEA', 'TDAH + TEA', 'outro'];
 
 export default function WhoAreYou2c({ navigation }: any) {
   const { palette, type } = useTheme();
-  const [vinculo, setVinculo] = useState('mãe');
+  const { state, setState } = useApp();
+  const [name, setName] = useState(state.parentName);
+  const [vinculo, setVinculo] = useState(state.relation || 'mãe');
   const [diagnostico, setDiagnostico] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const next = (skip?: boolean) => {
+    if (!skip && !name.trim()) {
+      setError('Como podemos te chamar?');
+      return;
+    }
+    if (!skip) setState((s) => ({ ...s, parentName: name.trim(), relation: vinculo }));
+    navigation.navigate('AboutChild2d');
+  };
 
   return (
     <OnboardingShell
@@ -21,15 +35,23 @@ export default function WhoAreYou2c({ navigation }: any) {
       subtitle="Só o essencial. Você pode mudar isso depois."
       footer={
         <>
-          <Button label="Continuar" onPress={() => navigation.navigate('AboutChild2d')} />
-          <Button label="Pular por agora" variant="ghost" onPress={() => navigation.navigate('AboutChild2d')} />
+          <Button label="Continuar" onPress={() => next()} />
+          <Button label="Pular por agora" variant="ghost" onPress={() => next(true)} />
         </>
       }
     >
-      <View>
-        <FieldLabel>Como podemos te chamar</FieldLabel>
-        <TextInputLike value="Camila" />
-      </View>
+      <TextField
+        label="Como podemos te chamar"
+        value={name}
+        onChangeText={(v) => {
+          setName(v);
+          setError(null);
+        }}
+        placeholder="seu nome ou apelido"
+        autoCapitalize="words"
+        maxLength={40}
+        error={error}
+      />
 
       <View>
         <FieldLabel>Seu vínculo com a criança</FieldLabel>
@@ -45,12 +67,12 @@ export default function WhoAreYou2c({ navigation }: any) {
         <Text style={[type.caption, { color: palette.textMuted, marginTop: 6, fontSize: 12.5 }]}>Opcional. Ajuda a ajustar o ritmo do app pra você.</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
           {DIAGNOSTICOS.map((d) => (
-            <Chip key={d} label={d} selected={diagnostico === d} onPress={() => setDiagnostico(d)} />
+            <Chip key={d} label={d} selected={diagnostico === d} onPress={() => setDiagnostico(diagnostico === d ? null : d)} />
           ))}
         </View>
-        <Text onPress={() => setDiagnostico(null)} style={[type.caption, { color: palette.hint, marginTop: 12, fontSize: 12.5 }]}>
-          prefiro não informar
-        </Text>
+        <Pressable onPress={() => setDiagnostico(null)} hitSlop={8} style={{ alignSelf: 'flex-start', marginTop: 12, paddingVertical: 4 }}>
+          <Text style={[type.caption, { color: palette.hint, fontSize: 12.5 }]}>prefiro não informar</Text>
+        </Pressable>
       </Card>
     </OnboardingShell>
   );

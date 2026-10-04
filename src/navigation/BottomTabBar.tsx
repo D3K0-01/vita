@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, CalendarCheck, Layers, Store, Users, MessageCircle } from 'lucide-react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
@@ -20,12 +20,14 @@ const LABELS: Record<string, string> = {
   FasesTab: 'Fases',
   ParceirosTab: 'Parceiros',
   ComunidadeTab: 'Comunidade',
-  IATab: 'IA / SOS',
+  IATab: 'IA',
 };
 
 export function BottomTabBar({ state, navigation }: BottomTabBarProps) {
   const { palette } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const labelSize = width < 380 ? 9 : 10;
 
   // Dentro do fluxo de Parceiros, as telas internas (detalhe, cupom, mapa,
   // avaliações, cadastro) têm rodapé próprio — a barra some, como no design.
@@ -39,10 +41,10 @@ export function BottomTabBar({ state, navigation }: BottomTabBarProps) {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 8,
-        paddingTop: 10,
-        paddingBottom: Math.max(insets.bottom, 14),
-        backgroundColor: palette.bg + 'F5',
+        paddingHorizontal: 4,
+        paddingTop: 6,
+        paddingBottom: Math.max(insets.bottom, 8),
+        backgroundColor: palette.bg,
         borderTopWidth: 1,
         borderTopColor: palette.divider,
       }}
@@ -53,14 +55,22 @@ export function BottomTabBar({ state, navigation }: BottomTabBarProps) {
         return (
           <Pressable
             key={route.key}
-            onPress={() => navigation.navigate(route.name)}
-            style={{ flex: 1, alignItems: 'center', gap: 4 }}
+            onPress={() => {
+              const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+              if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
+              // tocar de novo na aba ativa volta para a primeira tela dela
+              else if (focused && (route.state as any)?.index > 0) navigation.navigate(route.name, { screen: (route.state as any).routeNames?.[0] });
+            }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: focused }}
+            accessibilityLabel={LABELS[route.name]}
+            style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, minHeight: 48 }}
           >
-            <Icon size={20} color={focused ? palette.tabActive : palette.tabInactive} strokeWidth={1.9} />
+            <Icon size={21} color={focused ? palette.tabActive : palette.tabInactive} strokeWidth={1.9} />
             <Text
               style={{
                 fontFamily: focused ? 'Lexend_500Medium' : 'Lexend_400Regular',
-                fontSize: 9,
+                fontSize: labelSize,
                 color: focused ? palette.tabActive : palette.tabInactive,
               }}
               numberOfLines={1}

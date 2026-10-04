@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, Linking, Dimensions } from 'react-native';
+import { View, Text, Pressable, Linking, TextInput, Platform } from 'react-native';
 import { ChevronLeft, Search, Navigation } from 'lucide-react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -8,12 +8,15 @@ import { SeloBadge } from '../../components/partners/SeloBadge';
 import { TagPill } from '../../components/partners/TagPill';
 import { useApp } from '../../state/AppContext';
 import { formatKm, partners, type Partner } from '../../data/partners';
+import { PartnerMap } from '../../components/partners/PartnerMap';
+import { useUI } from '../../components/UIProvider';
+import { directionsUrl, type LatLng } from '../../utils/geo';
 
 const FILTROS = ['Recomendados', 'Todos', 'Abertos agora'] as const;
 type FiltroMapa = (typeof FILTROS)[number];
 
-// Protótipo: o mapa é uma representação estática com pinos posicionados por
-// coordenada relativa (`partner.mapa`). A integração com mapa real entra depois.
+// Mapa real (Google Maps). Os parceiros e o selo continuam sendo os dados de
+// exemplo do protótipo; ver components/partners/PartnerMap.tsx.
 function minutosDeRota(km: number) {
   return Math.max(3, Math.round(km * 6.5));
 }
@@ -24,21 +27,35 @@ export default function PartnersMap1e({ navigation, route }: any) {
   const [filtro, setFiltro] = useState<FiltroMapa>('Recomendados');
 
   const todos = useMemo(() => [...partners, ...state.communityPartners], [state.communityPartners]);
+  const [busca, setBusca] = useState('');
+  const [user, setUser] = useState<LatLng | null>(null);
+  const { toast } = useUI();
   const visiveis = useMemo(() => {
-    if (filtro === 'Recomendados') return todos.filter((p) => p.selo === 'vita_recomenda');
-    if (filtro === 'Abertos agora') return todos.filter((p) => p.abertoAgora);
-    return todos;
-  }, [todos, filtro]);
+    let list = todos;
+    if (filtro === 'Recomendados') list = list.filter((p) => p.selo === 'vita_recomenda');
+    if (filtro === 'Abertos agora') list = list.filter((p) => p.abertoAgora);
+    const q = busca.trim().toLowerCase();
+    if (q) list = list.filter((p) => `${p.nome} ${p.categoria} ${p.bairro} ${p.tagsRapidas.join(' ')}`.toLowerCase().includes(q));
+    return list;
+  }, [todos, filtro, busca]);
+
+  const localizar = () => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return toast('Seu navegador não informa a localização');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUser({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => toast('Não foi possível pegar sua localização. Verifique a permissão do navegador.'),
+      { enableHighAccuracy: false, timeout: 10000 }
+    );
+  };
 
   const inicial = route.params?.partnerId ?? visiveis[0]?.id ?? todos[0].id;
   const [selecionadoId, setSelecionadoId] = useState<string>(inicial);
-  const selecionado: Partner = todos.find((p) => p.id === selecionadoId) ?? todos[0];
+  // se o filtro esconder o selecionado, passa para o primeiro visível
+  const selecionado: Partner = visiveis.find((p) => p.id === selecionadoId) ?? visiveis[0] ?? todos.find((p) => p.id === selecionadoId) ?? todos[0];
 
-  const largura = Dimensions.get('window').width;
 
   const abrirRota = () => {
-    const destino = encodeURIComponent(`${selecionado.nome}, ${selecionado.endereco}, ${selecionado.bairro}`);
-    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${destino}`).catch(() => {});
+    Linking.openURL(directionsUrl(selecionado)).catch(() => {});
   };
 
   const gerarCupom = () => {
@@ -52,9 +69,16 @@ export default function PartnersMap1e({ navigation, route }: any) {
         <Pressable onPress={() => navigation.goBack()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Voltar">
           <ChevronLeft size={22} color={palette.text} strokeWidth={2} />
         </Pressable>
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: radii.md, paddingVertical: 10, paddingHorizontal: 13 }}>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: radii.md, paddingLeft: 13 }}>
           <Search size={16} color={palette.hint} strokeWidth={2} />
-          <Text style={[type.bodySm, { fontSize: 13, color: palette.text }]}>Pinheiros · até 5 km</Text>
+          <TextInput
+            value={busca}
+            onChangeText={setBusca}
+            placeholder="buscar perto de Pinheiros"
+            placeholderTextColor={palette.textFaint}
+            accessibilityLabel="Buscar parceiro no mapa"
+            style={[{ flex: 1, minHeight: 44, fontFamily: 'Lexend_400Regular', fontSize: 13.5, color: palette.text }, { outlineStyle: 'none' } as any]}
+          />
         </View>
       </View>
 
@@ -65,9 +89,11 @@ export default function PartnersMap1e({ navigation, route }: any) {
             <Pressable
               key={f}
               onPress={() => setFiltro(f)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
               style={{
                 borderRadius: radii.pill,
-                paddingVertical: 8,
+                paddingVertical: 10,
                 paddingHorizontal: 13,
                 backgroundColor: on ? palette.chipSelectedBg : palette.surface,
                 borderWidth: 1,
@@ -80,49 +106,15 @@ export default function PartnersMap1e({ navigation, route }: any) {
         })}
       </View>
 
-      {/* mapa */}
-      <View style={{ flex: 1, backgroundColor: alpha(colors.pastelGreen, 0.25), overflow: 'hidden' }}>
-        {/* ruas */}
-        <View style={{ position: 'absolute', left: '46%', top: 0, bottom: 0, width: 10, backgroundColor: alpha(colors.greyAzure, 0.25) }} />
-        <View style={{ position: 'absolute', top: '38%', left: 0, right: 0, height: 10, backgroundColor: alpha(colors.greyAzure, 0.25) }} />
-        <View style={{ position: 'absolute', top: '74%', left: 0, right: 0, height: 6, backgroundColor: alpha(colors.greyAzure, 0.18) }} />
-        <View style={{ position: 'absolute', left: '16%', top: 0, bottom: 0, width: 5, backgroundColor: alpha(colors.greyAzure, 0.18) }} />
-        {/* praça */}
-        <View style={{ position: 'absolute', left: '62%', top: '8%', width: 120, height: 120, borderRadius: 60, backgroundColor: alpha(colors.accent1, 0.22) }} />
-
-        {/* você está aqui */}
-        <View style={{ position: 'absolute', left: '50%', top: '62%', marginLeft: -9, marginTop: -9 }}>
-          <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.greyAzure, borderWidth: 3, borderColor: colors.white }} />
-        </View>
-
-        {visiveis.map((p) => {
-          const on = p.id === selecionadoId;
-          return (
-            <Pressable
-              key={p.id}
-              onPress={() => setSelecionadoId(p.id)}
-              style={{ position: 'absolute', left: `${p.mapa.x * 100}%`, top: `${p.mapa.y * 100}%`, transform: [{ translateX: -largura * 0.16 }, { translateY: -14 }] }}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 5,
-                  borderRadius: 20,
-                  paddingVertical: 6,
-                  paddingHorizontal: 10,
-                  backgroundColor: on ? colors.darkAzure : colors.white,
-                  borderWidth: 1,
-                  borderColor: on ? colors.darkAzure : palette.chipBorder,
-                }}
-              >
-                <Text style={{ fontFamily: 'Lexend_600SemiBold', fontSize: 10.5, color: on ? colors.white : colors.darkAzure }}>
-                  {p.beneficio.resumo} · {p.nome}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
+      {/* mapa (Google Maps) */}
+      <View style={{ flex: 1 }}>
+        {visiveis.length ? (
+          <PartnerMap partners={visiveis} selectedId={selecionado.id} onSelect={setSelecionadoId} user={user} onLocate={Platform.OS === 'web' ? localizar : undefined} />
+        ) : (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 30 }}>
+            <Text style={[type.body, { color: palette.textMuted, textAlign: 'center' }]}>Nenhum parceiro encontrado para "{busca}".</Text>
+          </View>
+        )}
       </View>
 
       {/* bottom sheet do parceiro selecionado */}

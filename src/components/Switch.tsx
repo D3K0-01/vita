@@ -1,25 +1,30 @@
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeProvider';
 
-export function Switch({ value, onValueChange, achievement }: { value: boolean; onValueChange: (v: boolean) => void; achievement?: boolean }) {
-  const { colors, gradients } = useTheme();
-  const body = (
-    <View style={{ width: 21, height: 21, borderRadius: 11, backgroundColor: '#fff' }} />
-  );
+export function Switch({ value, onValueChange, achievement, label }: { value: boolean; onValueChange: (v: boolean) => void; achievement?: boolean; label?: string }) {
+  const { colors, gradients, palette, scheme } = useTheme();
+  const knob = <View style={{ width: 21, height: 21, borderRadius: 11, backgroundColor: '#fff' }} />;
+  const track = { width: 48, height: 28, borderRadius: 14, justifyContent: 'center' as const, padding: 3.5 };
   return (
-    <Pressable onPress={() => onValueChange(!value)} hitSlop={8}>
+    <Pressable
+      onPress={() => onValueChange(!value)}
+      hitSlop={10}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      accessibilityLabel={label}
+    >
       {value ? (
         achievement !== false ? (
-          <LinearGradient colors={gradients.achievement} style={{ width: 46, height: 27, borderRadius: 14, alignItems: 'flex-end', justifyContent: 'center', padding: 3 }}>
-            {body}
+          <LinearGradient colors={gradients.achievement} style={[track, { alignItems: 'flex-end' }]}>
+            {knob}
           </LinearGradient>
         ) : (
-          <View style={{ width: 46, height: 27, borderRadius: 14, backgroundColor: colors.darkAzure, alignItems: 'flex-end', justifyContent: 'center', padding: 3 }}>{body}</View>
+          <View style={[track, { alignItems: 'flex-end', backgroundColor: scheme === 'dark' ? colors.accent1 : colors.darkAzure }]}>{knob}</View>
         )
       ) : (
-        <View style={{ width: 46, height: 27, borderRadius: 14, backgroundColor: 'rgba(46,75,82,.15)', justifyContent: 'center', padding: 3 }}>{body}</View>
+        <View style={[track, { backgroundColor: palette.divider, borderWidth: 1, borderColor: palette.chipBorder }]}>{knob}</View>
       )}
     </Pressable>
   );

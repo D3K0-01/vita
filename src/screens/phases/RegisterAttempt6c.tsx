@@ -1,30 +1,31 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, TextInput } from 'react-native';
+import { View, Text, Pressable, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { Button } from '../../components/Button';
 import { useApp } from '../../state/AppContext';
 
-export default function RegisterAttempt6c({ navigation }: any) {
+export default function RegisterAttempt6c({ navigation, route }: any) {
   const { palette, colors, type, radii } = useTheme();
-  const { registerPhaseAttempt } = useApp();
+  const { registerTrackAttempt } = useApp();
+  const trackId = route.params?.id ?? 'alimentacao';
   const [answer, setAnswer] = useState<'sim' | 'não' | null>(null);
   const [note, setNote] = useState('');
 
   const save = () => {
     if (!answer) return;
-    registerPhaseAttempt(answer === 'sim');
-    navigation.replace(answer === 'sim' ? 'Celebration6c2' : 'NotYet6d');
+    registerTrackAttempt(trackId, answer === 'sim', note);
+    navigation.replace(answer === 'sim' ? 'Celebration6c2' : 'NotYet6d', { id: trackId });
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.darkAzure, justifyContent: 'flex-end' }}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: 'rgba(20,32,36,0.6)', justifyContent: 'flex-end' }}>
       <Pressable style={{ flex: 1 }} onPress={() => navigation.goBack()} />
       <View style={{ backgroundColor: palette.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 22, paddingTop: 20, paddingBottom: 40, gap: 22 }}>
         <View style={{ width: 44, height: 5, borderRadius: 3, backgroundColor: palette.chipBorder, alignSelf: 'center' }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Text style={[type.title, { color: palette.text, fontSize: 24 }]}>Registrar tentativa</Text>
-          <Pressable onPress={() => navigation.goBack()}>
+          <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Fechar" style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -10 }}>
             <X size={22} color={palette.hint} strokeWidth={2} />
           </Pressable>
         </View>
@@ -42,12 +43,12 @@ export default function RegisterAttempt6c({ navigation }: any) {
                   alignItems: 'center',
                   paddingVertical: 20,
                   borderRadius: 18,
-                  backgroundColor: answer === a ? colors.pastelGreen : '#fff',
+                  backgroundColor: answer === a ? colors.pastelGreen : palette.surface,
                   borderWidth: 1.5,
                   borderColor: colors.pastelGreen,
                 }}
               >
-                <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 18, color: colors.darkAzure }}>{a}</Text>
+                <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 18, color: answer === a ? colors.darkAzure : palette.text }}>{a}</Text>
               </Pressable>
             ))}
           </View>
@@ -63,12 +64,12 @@ export default function RegisterAttempt6c({ navigation }: any) {
             multiline
             placeholder="ex: mexeu a massa por 5 minutos"
             placeholderTextColor={palette.textFaint}
-            style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: palette.chipBorder, borderRadius: radii.md, padding: 15, minHeight: 74, fontFamily: 'Lexend_400Regular', fontSize: 14, color: palette.text, textAlignVertical: 'top' }}
+            style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.chipBorder, borderRadius: radii.md, padding: 15, minHeight: 74, fontFamily: 'Lexend_400Regular', fontSize: 14, color: palette.text, textAlignVertical: 'top' }}
           />
         </View>
 
         <Button label="Salvar tentativa" onPress={save} disabled={!answer} />
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

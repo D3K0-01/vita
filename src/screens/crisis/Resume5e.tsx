@@ -28,7 +28,7 @@ export default function Resume5e({ navigation }: any) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.darkAzure }} edges={['top', 'bottom']}>
       <View style={{ flex: 1, paddingHorizontal: 22, paddingTop: 8, gap: 24 }}>
-        <Pressable onPress={fechar} style={{ alignItems: 'flex-end' }}>
+        <Pressable onPress={fechar} accessibilityLabel="Fechar" style={{ alignSelf: 'flex-end', width: 48, height: 48, alignItems: 'center', justifyContent: 'center', marginRight: -12 }}>
           <X size={20} color={colors.offWhite} strokeWidth={2} />
         </Pressable>
 
@@ -45,7 +45,7 @@ export default function Resume5e({ navigation }: any) {
           <Pressable onPress={continua} style={{ backgroundColor: 'rgba(242,239,230,.1)', borderWidth: 1, borderColor: 'rgba(242,239,230,.18)', borderRadius: 20, padding: 22, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 21, color: colors.offWhite }}>ainda está acontecendo</Text>
-              <Text style={{ fontFamily: 'Lexend_300Light', fontSize: 13, color: colors.offWhite, opacity: 0.7, marginTop: 4 }}>volta no passo {session?.step ?? 2} de 4</Text>
+              <Text style={{ fontFamily: 'Lexend_300Light', fontSize: 13, color: colors.offWhite, opacity: 0.7, marginTop: 4 }}>volta no passo {session?.step ?? 1} de 4</Text>
             </View>
             <ChevronRight size={20} color={colors.offWhite} strokeWidth={2} />
           </Pressable>

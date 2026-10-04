@@ -15,7 +15,14 @@ type Props = {
 export function CheckRow({ label, time, done, onToggle, size = 22 }: Props) {
   const { palette, colors, gradients, type } = useTheme();
   return (
-    <Pressable onPress={onToggle} style={{ flexDirection: 'row', alignItems: 'center', gap: 11 }}>
+    <Pressable
+      onPress={onToggle}
+      disabled={!onToggle}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: !!done }}
+      accessibilityLabel={label}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 11, minHeight: 44, opacity: pressed ? 0.6 : 1 })}
+    >
       {done ? (
         <LinearGradient
           colors={gradients.achievement}

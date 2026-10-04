@@ -9,7 +9,9 @@ function EmergencyRow({ number, name, sub }: { number: string; name: string; sub
   const { colors } = useTheme();
   return (
     <Pressable
-      onPress={() => Linking.openURL(`tel:${number}`)}
+      onPress={() => Linking.openURL(`tel:${number}`).catch(() => {})}
+      accessibilityRole="button"
+      accessibilityLabel={`Ligar para ${name}, ${number}`}
       style={{ backgroundColor: colors.darkAzure, borderRadius: 20, padding: 20, flexDirection: 'row', alignItems: 'center', gap: 16 }}
     >
       <Text style={{ fontFamily: 'BricolageGrotesque_600SemiBold', fontSize: 32, letterSpacing: -0.5, color: colors.offWhite }}>{number}</Text>
@@ -33,11 +35,11 @@ export default function Safety5d({ navigation }: any) {
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 8, paddingBottom: 30, gap: 20 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Pressable onPress={() => navigation.goBack()} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Pressable onPress={() => navigation.goBack()} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 48 }}>
             <ChevronLeft size={18} color={palette.text} strokeWidth={2} />
             <Text style={{ fontFamily: 'Lexend_400Regular', fontSize: 13.5, color: palette.text, opacity: 0.75 }}>voltar</Text>
           </Pressable>
-          <Pressable onPress={() => navigation.getParent()?.goBack()}>
+          <Pressable onPress={() => navigation.getParent()?.goBack()} accessibilityLabel="Fechar" style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center', marginRight: -12 }}>
             <X size={18} color={palette.text} strokeWidth={2} />
           </Pressable>
         </View>
@@ -47,6 +49,7 @@ export default function Safety5d({ navigation }: any) {
         <View style={{ gap: 12 }}>
           <EmergencyRow number="192" name="SAMU" sub="risco à vida ou ferimento" />
           <EmergencyRow number="188" name="CVV" sub="apoio emocional, 24h" />
+          <EmergencyRow number="190" name="Polícia" sub="violência ou ameaça" />
         </View>
 
         {state.trustedContact && (
@@ -58,7 +61,7 @@ export default function Safety5d({ navigation }: any) {
                 <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 17, color: palette.text }}>{state.trustedContact.name}</Text>
                 <Text style={{ fontFamily: 'Lexend_300Light', fontSize: 12.5, color: palette.textMuted, opacity: 0.85, marginTop: 2 }}>{state.trustedContact.relation}</Text>
               </View>
-              <Pressable onPress={() => Linking.openURL(`tel:${state.trustedContact!.phone}`)} style={{ backgroundColor: colors.accent2, borderRadius: 22, paddingVertical: 12, paddingHorizontal: 22 }}>
+              <Pressable onPress={() => Linking.openURL(`tel:${state.trustedContact!.phone.replace(/[^\d+]/g, '')}`).catch(() => {})} style={{ backgroundColor: colors.accent2, borderRadius: 22, paddingVertical: 12, paddingHorizontal: 22 }}>
                 <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 14, color: '#fff' }}>ligar</Text>
               </Pressable>
             </View>
