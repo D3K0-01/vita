@@ -1,0 +1,55 @@
+name: Deploy web to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # permite publicar manualmente pela aba Actions
+  workflow_dispatch:
+
+# necessário para o Pages publicar a partir do Actions
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# se dois pushes acontecerem juntos, termina o último e cancela o anterior
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Exportar site estático
+        run: npx expo export -p web
+
+      # o Pages não roda Jekyll; sem isso ele ignora as pastas _expo/
+      - name: Desativar Jekyll
+        run: touch dist/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
