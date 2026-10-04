@@ -14,7 +14,7 @@ import { Platform } from 'react-native';
  * 'https://vita-app.vercel.app/api/chat' — assim o GitHub Pages e o app no
  * celular também usam a IA. Vazio = só respostas locais fora do Vercel.
  */
-const DEFAULT_CHAT_API_URL = 'https://vita-deko-s-projects3.vercel.app/api/chat';
+const DEFAULT_CHAT_API_URL = 'https://vita-topaz-psi.vercel.app/api/chat';
 
 function resolveChatUrl(): string {
   const fromEnv = process.env.EXPO_PUBLIC_CHAT_API_URL;
