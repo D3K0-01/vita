@@ -53,7 +53,7 @@ function loadGoogleMaps(key: string): Promise<any> {
   loader = new Promise((resolve, reject) => {
     w.__vitaMapsReady = () => resolve(w.google);
     const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&language=pt-BR&region=BR&callback=__vitaMapsReady`;
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&loading=async&language=pt-BR&region=BR&callback=__vitaMapsReady`;
     s.async = true;
     s.onerror = () => {
       loader = null;
@@ -252,7 +252,7 @@ function EmbedMap({ partners, selectedId, onSelect, user, onLocate }: PartnerMap
       )}
 
       {userPt && (
-        <View pointerEvents="none" style={{ position: 'absolute', left: userPt.x - 9, top: userPt.y - 9, width: 18, height: 18, borderRadius: 9, backgroundColor: colors.greyAzure, borderWidth: 3, borderColor: '#fff' }} />
+        <View style={{ pointerEvents: 'none', position: 'absolute', left: userPt.x - 9, top: userPt.y - 9, width: 18, height: 18, borderRadius: 9, backgroundColor: colors.greyAzure, borderWidth: 3, borderColor: '#fff' }} />
       )}
 
       {size.w > 0 &&

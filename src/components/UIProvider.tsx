@@ -141,8 +141,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
 
       {toastMsg !== null && (
         <Animated.View
-          pointerEvents="none"
-          style={{ position: 'absolute', left: 16, right: 16, top: insets.top + 12, alignItems: 'center', opacity, zIndex: 1000 }}
+          style={{ pointerEvents: 'none', position: 'absolute', left: 16, right: 16, top: insets.top + 12, alignItems: 'center', opacity, zIndex: 1000 }}
         >
           <View style={{ backgroundColor: colors.darkAzure, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 18, maxWidth: 480, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 8 }}>
             <Text style={[type.bodySm, { color: colors.offWhite, textAlign: 'center' }]}>{toastMsg}</Text>

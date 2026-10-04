@@ -12,7 +12,7 @@ export function SOSButton({ bottom = 16 }: { bottom?: number }) {
   const navigation = useNavigation<any>();
   const { state } = useApp();
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', right: 16, bottom, alignItems: 'center', gap: 2 }}>
+    <View style={{ pointerEvents: 'box-none', position: 'absolute', right: 16, bottom, alignItems: 'center', gap: 2 }}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="SOS: abrir o Modo Crise"
