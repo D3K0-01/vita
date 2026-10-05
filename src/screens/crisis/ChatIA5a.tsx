@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { History, Info, ChevronRight, ArrowUp, SquarePen, WifiOff } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -21,6 +21,19 @@ export default function ChatIA5a({ navigation, route }: any) {
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const messages = state.chat;
+  const { height: winH } = useWindowDimensions();
+
+  // o campo de mensagem cresce com o texto até ~40% da tela (depois rola por dentro)
+  const [inputW, setInputW] = useState(280);
+  const [measuredH, setMeasuredH] = useState(0);
+  const maxInputH = Math.max(120, Math.round(winH * 0.4));
+  const estimateH = () => {
+    if (!draft) return 48;
+    const perLine = Math.max(10, Math.floor((inputW - 32) / 8.2));
+    const lines = draft.split('\n').reduce((n, p) => n + Math.max(1, Math.ceil(p.length / perLine)), 0);
+    return lines * 22 + 26;
+  };
+  const inputH = Math.min(maxInputH, Math.max(48, Platform.OS === 'web' || !measuredH || !draft ? estimateH() : measuredH));
 
   // "Pedir uma ideia" (Fases) chega aqui com um texto pronto
   useEffect(() => {
@@ -214,6 +227,12 @@ export default function ChatIA5a({ navigation, route }: any) {
             <TextInput
               value={draft}
               onChangeText={setDraft}
+              onLayout={(e) => setInputW(e.nativeEvent.layout.width)}
+              onContentSizeChange={(e) => {
+                // no celular, a altura medida do texto é confiável; na web usamos a estimativa
+                if (Platform.OS !== 'web') setMeasuredH(e.nativeEvent.contentSize.height + 26);
+              }}
+              scrollEnabled={inputH >= maxInputH}
               placeholder="escreva do jeito que der…"
               placeholderTextColor={palette.textFaint}
               multiline
@@ -229,7 +248,7 @@ export default function ChatIA5a({ navigation, route }: any) {
               style={[
                 {
                   flex: 1,
-                  maxHeight: 120,
+                  height: inputH,
                   minHeight: 48,
                   backgroundColor: palette.surface,
                   borderWidth: 1,
@@ -263,6 +282,9 @@ export default function ChatIA5a({ navigation, route }: any) {
               <ArrowUp size={20} color={colors.offWhite} strokeWidth={2.2} />
             </Pressable>
           </View>
+          {draft.length > 400 && (
+            <Text style={[type.caption, { fontSize: 10.5, color: palette.textFaint, textAlign: 'right', marginTop: 4, marginRight: 60 }]}>{draft.length}/1500</Text>
+          )}
           {state.plan === 'base' && (
             <Text style={[type.caption, { fontSize: 10.5, color: palette.textFaint, textAlign: 'center', marginTop: 6 }]}>
               {Math.min(sentToday, BASE_DAILY_AI_LIMIT)} de {BASE_DAILY_AI_LIMIT} mensagens hoje · plano Base
