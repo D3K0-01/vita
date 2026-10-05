@@ -159,9 +159,13 @@ export function EditChild({ navigation, route }: any) {
     setErrors(e);
     if (e.name || e.age) return;
     if (!existing && !canAddChild) {
+      if (plan === 'premium') return toast(`O Premium permite até ${limits.children} perfis de filhos`);
       upsell(
-        plan === 'base' ? 'O Gratuito tem 1 perfil de filho' : `Limite de ${limits.children} perfis de filhos`,
-        plan === 'base' ? 'Com o Plus, você acompanha 2 filhos, cada um com sua rotina, trilhas e diário.' : 'O protótipo permite até 2 perfis. Fale com o suporte se precisar de mais.'
+        plan === 'base' ? 'O Gratuito tem 1 perfil de filho' : 'O Plus tem até 2 perfis de filhos',
+        plan === 'base'
+          ? 'Com o Plus, você acompanha 2 filhos, cada um com sua rotina, trilhas e diário.'
+          : 'Com o Premium, você acompanha até 5 filhos, além do apoio de uma profissional de referência.',
+        plan === 'base' ? 'plus' : 'premium'
       );
       return;
     }

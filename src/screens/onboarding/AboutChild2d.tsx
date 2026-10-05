@@ -90,7 +90,7 @@ export default function AboutChild2d({ navigation }: any) {
 
   const addChild = async () => {
     if (1 + others.length >= LIMITS[state.plan].children) {
-      return toast(`O plano Gratuito tem ${LIMITS.base.children} perfil de filho. No Plus, você acompanha até ${LIMITS.plus.children}.`);
+      return toast(`O plano Gratuito tem ${LIMITS.base.children} perfil de filho. No Plus, você acompanha até ${LIMITS.plus.children}; no Premium, até ${LIMITS.premium.children}.`);
     }
     const child = await askChild(prompt);
     if (child) setOthers((o) => [...o, child]);
@@ -190,7 +190,7 @@ export default function AboutChild2d({ navigation }: any) {
         <Plus size={18} color={colors.accent2} strokeWidth={2} />
         <View>
           <Text style={[type.body, { fontSize: 14, color: palette.text }]}>Adicionar outro filho</Text>
-          <Text style={[type.caption, { fontSize: 11.5, color: palette.textFaint, marginTop: 2 }]}>no Plus e no Premium, até 2 perfis</Text>
+          <Text style={[type.caption, { fontSize: 11.5, color: palette.textFaint, marginTop: 2 }]}>no Plus, até 2 perfis; no Premium, até 5</Text>
         </View>
       </Pressable>
     </OnboardingShell>

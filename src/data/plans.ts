@@ -36,7 +36,7 @@ export const PLANS: Plan[] = [
     price: 'R$ 64,90/mês',
     priceShort: 'R$ 64,90',
     tagline: 'Tudo do Plus + apoio de um profissional.',
-    highlights: ['tudo do Plus', 'apoio de uma psicóloga de referência', 'orientação por vídeo agendada', 'compartilhe diário e acompanhamento com a profissional'],
+    highlights: ['tudo do Plus', 'até 5 perfis de filhos', 'apoio de uma psicóloga de referência', 'orientação por vídeo agendada', 'compartilhe diário e acompanhamento com a profissional'],
   },
 ];
 
@@ -52,13 +52,13 @@ export const COMPARISON: FeatureRow[] = [
   { label: 'Comunidade', base: ['included', 'Acesso completo, até 20 grupos'], plus: ['included', 'Grupos exclusivos + selo'], premium: ['included', 'Tudo do Plus'] },
   { label: 'Chat com suporte 24h', base: ['included', 'Ilimitado + Modo Crise'], plus: ['included', 'Ilimitado + Crise prioritário'], premium: ['extra', 'Profissional humano'] },
   { label: 'Acompanhamento', base: ['included', 'Resumo semanal'], plus: ['included', 'Histórico + exportação'], premium: ['included', 'Tudo do Plus'] },
-  { label: 'Perfis de filhos', base: ['limited', '1 filho'], plus: ['included', '2 filhos'], premium: ['included', 'Tudo do Plus'] },
+  { label: 'Perfis de filhos', base: ['limited', '1 filho'], plus: ['included', '2 filhos'], premium: ['extra', 'Até 5 filhos'] },
 ];
 
 export const LIMITS: Record<PlanId, { tasksPerChild: number; parallelTracks: number; groups: number; children: number }> = {
   base: { tasksPerChild: 15, parallelTracks: 2, groups: 20, children: 1 },
   plus: { tasksPerChild: Infinity, parallelTracks: Infinity, groups: Infinity, children: 2 },
-  premium: { tasksPerChild: Infinity, parallelTracks: Infinity, groups: Infinity, children: 2 },
+  premium: { tasksPerChild: Infinity, parallelTracks: Infinity, groups: Infinity, children: 5 },
 };
 
 export const PLAN_RANK: Record<PlanId, number> = { base: 0, plus: 1, premium: 2 };

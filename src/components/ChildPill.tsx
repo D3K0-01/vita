@@ -11,7 +11,7 @@ import { usePlan } from '../state/usePlan';
 export function ChildPill({ showAge = true }: { showAge?: boolean }) {
   const { palette, type } = useTheme();
   const { state, setActiveChild } = useApp();
-  const { choose } = useUI();
+  const { choose, toast } = useUI();
   const navigation = useNavigation<any>();
   const { canAddChild, plan, upsell } = usePlan();
 
@@ -26,11 +26,13 @@ export function ChildPill({ showAge = true }: { showAge?: boolean }) {
         ? { label: '+ Adicionar filho ou filha', onPress: () => navigation.navigate('SettingsStack', { screen: 'EditChild' }) }
         : {
             label: '+ Adicionar filho ou filha',
-            hint: plan === 'base' ? 'o Plus libera 2 perfis' : 'limite de 2 perfis',
+            hint: plan === 'base' ? 'o Plus libera 2 perfis' : plan === 'plus' ? 'o Premium libera até 5 perfis' : 'limite de 5 perfis',
             onPress: () =>
               plan === 'base'
                 ? upsell('O Gratuito tem 1 perfil de filho', 'Com o Plus, você acompanha 2 filhos, cada um com sua rotina, trilhas e diário.')
-                : undefined,
+                : plan === 'plus'
+                  ? upsell('O Plus tem até 2 perfis de filhos', 'Com o Premium, você acompanha até 5 filhos, além do apoio de uma profissional de referência.', 'premium')
+                  : toast('O Premium permite até 5 perfis de filhos'),
           },
     ]);
 

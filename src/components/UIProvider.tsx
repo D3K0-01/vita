@@ -180,7 +180,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
               <View style={{ backgroundColor: palette.surface, borderRadius: 18, borderWidth: 1, borderColor: palette.surfaceBorder, overflow: 'hidden' }}>
                 {overlay.choices.map((c, i) => (
                   <Pressable
-                    key={c.label}
+                    key={`${i}-${c.label}`}
                     accessibilityRole="button"
                     onPress={() => {
                       setOverlay(null);
