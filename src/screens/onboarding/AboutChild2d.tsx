@@ -90,7 +90,7 @@ export default function AboutChild2d({ navigation }: any) {
 
   const addChild = async () => {
     if (1 + others.length >= LIMITS[state.plan].children) {
-      return toast(`O plano Gratuito tem ${LIMITS.base.children} perfil de filho. No Plus, você acompanha até ${LIMITS.plus.children}; no Premium, até ${LIMITS.premium.children}.`);
+      return toast(`Seu plano permite até ${LIMITS[state.plan].children} ${LIMITS[state.plan].children === 1 ? 'perfil' : 'perfis'} de filhos.`);
     }
     const child = await askChild(prompt);
     if (child) setOthers((o) => [...o, child]);

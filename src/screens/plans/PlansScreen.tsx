@@ -6,7 +6,7 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { BackHeader } from '../../components/BackHeader';
 import { useUI } from '../../components/UIProvider';
 import { useApp } from '../../state/AppContext';
-import { PLANS, COMPARISON, Level, PlanId } from '../../data/plans';
+import { PLANS, COMPARISON, Level, PlanId, PLAN_RANK } from '../../data/plans';
 
 function LevelIcon({ level, onDark }: { level: Level; onDark?: boolean }) {
   const { colors, palette } = useTheme();
@@ -31,6 +31,15 @@ export default function PlansScreen({ navigation }: any) {
       if (await confirm({ title: 'Voltar para o Gratuito?', message: 'Nada do que foi registrado se perde. Alguns recursos ficam só para leitura, como o histórico completo.', confirmLabel: 'Mudar para o Gratuito', destructive: true })) {
         setState((s) => ({ ...s, plan: 'base' }));
         toast('Plano alterado para Gratuito');
+      }
+      return;
+    }
+    // troca para um plano menor: sem pagamento, só confirmação
+    if (PLAN_RANK[id] < PLAN_RANK[current]) {
+      const name = PLANS.find((p) => p.id === id)!.name;
+      if (await confirm({ title: `Mudar para o ${name}?`, message: 'Nada do que foi registrado se perde. Alguns recursos do plano atual ficam bloqueados.', confirmLabel: `Mudar para o ${name}` })) {
+        setState((s) => ({ ...s, plan: id }));
+        toast(`Plano alterado para ${name}`);
       }
       return;
     }
@@ -102,7 +111,7 @@ export default function PlansScreen({ navigation }: any) {
               })}
             >
               <Text style={[type.button, { fontSize: 14, color: isCurrent ? fg : dark ? colors.darkAzure : palette.text }]}>
-                {isCurrent ? 'Seu plano atual' : p.id === 'base' ? 'Continuar grátis' : `Assinar ${p.name} · 7 dias grátis`}
+                {isCurrent ? 'Seu plano atual' : p.id === 'base' ? 'Mudar para o Gratuito' : PLAN_RANK[p.id] < PLAN_RANK[current] ? `Mudar para o ${p.name}` : `Assinar ${p.name} · 7 dias grátis`}
               </Text>
             </Pressable>
           </View>

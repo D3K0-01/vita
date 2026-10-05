@@ -112,7 +112,8 @@ const initialState: StoredState = {
   tasks: [],
   mood: null,
   moodDate: null,
-  plan: 'base',
+  // demonstração: toda conta nova começa no Premium para mostrar todos os recursos
+  plan: 'premium',
   companions: [],
   proMessages: [],
   proBooking: null,
