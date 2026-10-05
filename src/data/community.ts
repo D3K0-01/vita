@@ -11,6 +11,8 @@ export type Group = {
   description: string;
   rules: string[];
   moderators: string;
+  /** Grupos exclusivos do Plus/Premium (rodas menores, com mediação). */
+  exclusive?: boolean;
 };
 
 export type Post = {
@@ -23,6 +25,8 @@ export type Post = {
   likes: number;
   createdAt: string;
   mine?: boolean;
+  /** Selo de apoiador(a) Plus/Premium. */
+  supporter?: boolean;
 };
 
 /** Comentário ou resposta. `threadId` é o id do post ou do encontro; `parentId` indica resposta. */
@@ -105,12 +109,30 @@ export const GROUPS: Group[] = [
     rules: ['Aqui o foco é você, não a criança', 'Sem comparações', 'Em risco, ligue 188 (CVV) ou 192'],
     moderators: 'Equipe Vita e Ana P.',
   },
+  {
+    id: 'g7',
+    name: 'Roda Plus: especialistas convidados',
+    members: 412,
+    description: 'Toda semana, uma profissional convidada responde às perguntas das famílias apoiadoras: fonoaudiologia, terapia ocupacional, psicologia e neuropediatria.',
+    rules: ['Uma pergunta por família a cada semana', 'As respostas são orientações gerais, não consulta', 'Sem compartilhar laudos ou documentos com dados pessoais'],
+    moderators: 'Equipe Vita',
+    exclusive: true,
+  },
+  {
+    id: 'g8',
+    name: 'Adolescência e novas fases',
+    members: 286,
+    description: 'Puberdade, autonomia, amizades e a passagem para o ensino médio. Um grupo menor e mediado para famílias de pré-adolescentes e adolescentes.',
+    rules: ['Respeite a privacidade dos adolescentes: nada de fotos ou nomes completos', 'Sem julgamento sobre o ritmo de cada um', 'Temas sensíveis com aviso no início do post'],
+    moderators: 'Equipe Vita e Lúcia R.',
+    exclusive: true,
+  },
 ];
 
 export const getGroup = (id: string) => GROUPS.find((g) => g.id === id);
 export const groupByName = (name: string) => GROUPS.find((g) => g.name === name);
 
-const post = (id: string, groupId: string, author: string, avatar: AvatarRef, hoursAgo: number, likes: number, body: string): Post => ({
+const post = (id: string, groupId: string, author: string, avatar: AvatarRef, hoursAgo: number, likes: number, body: string, supporter?: boolean): Post => ({
   id,
   groupId,
   group: getGroup(groupId)!.name,
@@ -119,6 +141,7 @@ const post = (id: string, groupId: string, author: string, avatar: AvatarRef, ho
   body,
   likes,
   createdAt: ago(hoursAgo),
+  supporter,
 });
 
 export const POSTS: Post[] = [
@@ -142,6 +165,16 @@ export const POSTS: Post[] = [
   post('p18', 'g6', 'Camila T.', null, 160, 21, 'Alguém mais sente culpa quando sai sozinha por uma hora? Como vocês lidam com isso?'),
   post('p19', 'g3', 'André F.', null, 170, 12, 'Usamos uma "caixa de movimento" com bola de pilates e elástico perto da mesa de estudo. Ajuda muito nas pausas.'),
   post('p20', 'g4', 'Luana P.', null, 180, 10, 'Dica de lugar: a biblioteca do bairro tem um horário silencioso às terças de manhã. Ele adorou.'),
+  post('p21', 'g1', 'Bianca A.', null, 3, 29, 'Primeira noite em três semanas que ele dormiu na própria cama a noite inteira! Fizemos a "escada": colchão no quarto dele, depois eu numa cadeira ao lado, depois a cadeira na porta. Paciência compensa.'),
+  post('p22', 'g2', 'Gustavo H.', null, 9, 12, 'Dúvida de iniciante: vocês colocam horário exato no quadro ou só a ordem das atividades? Meu filho tem 4 anos e ainda não lê as horas.'),
+  post('p27', 'g7', 'Equipe Vita', null, 6, 41, 'Esta semana, a fonoaudióloga Paula Reis responde perguntas sobre comunicação alternativa (CAA): pranchas, aplicativos e como começar em casa. Deixe sua dúvida nos comentários até quinta.'),
+  post('p29', 'g8', 'Cláudio M.', null, 12, 17, 'Meu filho de 13 anos quer ir sozinho para a escola. São quatro quadras. Como vocês começaram a dar esse tipo de autonomia?', true),
+  post('p23', 'g3', 'Mariana K.', null, 15, 33, 'Desabafo: ouvi de um parente que TDAH é "falta de limite". Respirei fundo e expliquei. Alguém tem um texto curto e confiável para mandar nessas horas?'),
+  post('p24', 'g4', 'Roberto C.', null, 20, 19, 'Festas de aniversário: vocês vão? Aqui a gente chega cedo, antes do barulho, e combina um sinal para ir embora. Funcionou muito bem no último fim de semana.'),
+  post('p28', 'g7', 'Viviane T.', null, 30, 14, 'Pergunta para a neuropediatra da próxima semana: como saber se é hora de reavaliar a medicação? Ele cresceu bastante este ano e as tardes ficaram mais difíceis.', true),
+  post('p25', 'g5', 'Débora F.', null, 40, 22, 'A escola aceitou montar um "cantinho da calma" na sala depois que levamos o relatório da terapeuta ocupacional. Almofada, abafador e um cartão de pausa. Vale tentar!'),
+  post('p30', 'g8', 'Lúcia R.', null, 45, 23, 'Conversamos sobre puberdade usando um livro com ilustrações simples e uma lista de "o que é esperado acontecer". Ela ficou bem mais tranquila do que eu imaginava.', true),
+  post('p26', 'g6', 'Simone G.', null, 52, 44, 'Montei um "revezamento" com duas mães da escola: cada uma fica com as três crianças um sábado por mês. Ganhei dois sábados livres por mês. Recomendo demais.'),
 ];
 
 const c = (
@@ -152,8 +185,9 @@ const c = (
   likes: number,
   text: string,
   parentId?: string,
-  avatar: AvatarRef = null
-): CommunityComment => ({ id, threadId, parentId, author, avatar, text, likes, createdAt: ago(hoursAgo) });
+  avatar: AvatarRef = null,
+  mention?: string
+): CommunityComment => ({ id, threadId, parentId, mention, author, avatar, text, likes, createdAt: ago(hoursAgo) });
 
 export const SEED_COMMENTS: CommunityComment[] = [
   // p1 — pijama
@@ -210,6 +244,87 @@ export const SEED_COMMENTS: CommunityComment[] = [
   c('c53', 'p18', 'Camila T.', 158, 2, 'Vou tentar pensar assim. Obrigada.', 'c52'),
   c('c54', 'p19', 'Fernanda L.', 169, 3, 'Elástico na perna da cadeira é genial também!'),
   c('c55', 'p20', 'Sofia C.', 179, 2, 'Qual bairro? Adoraria levar a minha.'),
+  c('c56', 'p20', 'Luana P.', 178, 3, 'Vila Mariana! Chega às 9h que é mais vazio.', 'c55'),
+  c('c57', 'p20', 'Tiago M.', 170, 4, 'Aqui o museu de ciências tem "manhã sensorial" no primeiro domingo do mês. Luz mais baixa e sem som nas salas.'),
+  // mais conversa nos grupos (exemplos)
+  c('c58', 'p3', 'Fernanda L.', 22, 6, 'Passei por isso semana passada. Ajudou deitar 20 minutos no escuro depois que ele dormiu, sem celular. Se cuida. 💚'),
+  c('c59', 'p3', 'Julia', 21, 3, 'Vou tentar isso hoje. Obrigada, Fernanda.', 'c58', 'julia'),
+  c('c60', 'p3', 'Camila T.', 20, 4, 'Se quiser conversar, o grupo Cuidar de quem cuida tem gente acordada até tarde.'),
+  c('c61', 'p6', 'Simone G.', 27, 5, 'Café quente é luxo! Aqui é o banho de 10 minutos com a porta trancada 😂'),
+  c('c62', 'p6', 'Ana P.', 26, 3, 'Isso! Pequeno, mas é nosso.', 'c61'),
+  c('c63', 'p6', 'Bianca A.', 24, 2, 'Salvando este post para reler nos dias difíceis.'),
+  c('c64', 'p7', 'Sofia C.', 31, 4, 'Aqui foi fase. Durou uns dois meses e passou quando ajustamos o horário do jantar (estava muito cedo).'),
+  c('c65', 'p7', 'Lucas T.', 30, 2, 'Jantar às 18h aqui. Pode ser isso mesmo!', 'c64'),
+  c('c66', 'p7', 'Renata M.', 29, 3, 'Uma caixinha de atividades silenciosas do lado da cama ajudou a gente a ganhar mais uma horinha.', 'c64', null, 'Lucas T.'),
+  c('c67', 'p8', 'Patrícia V.', 46, 4, 'Qual timer vocês usam? O do celular distrai mais do que ajuda aqui.'),
+  c('c68', 'p8', 'Fernanda L.', 45, 3, 'Um de cozinha, daqueles com o disco vermelho que vai diminuindo. Ele vê o tempo "acabando".', 'c67'),
+  c('c69', 'p8', 'André F.', 44, 2, 'Igual aqui! O visual faz toda a diferença.', 'c67', null, 'Fernanda L.'),
+  c('c70', 'p9', 'Roberto C.', 57, 3, 'A fono daqui recomendou mudar uma coisa só por vez: mesma comida, outro formato. Depois outra cor. Bem devagar.'),
+  c('c71', 'p9', 'Luana P.', 55, 2, 'Aqui funcionou deixar ela "brincar" com a comida nova, sem precisar comer. Tocar já era vitória.'),
+  c('c72', 'p10', 'Gustavo H.', 72, 3, 'Que bom ler isso. Vou tentar com a troca do horário do parquinho.'),
+  c('c73', 'p10', 'Beatriz N.', 71, 2, 'Avisa de manhã e lembra de novo uma hora antes. Aqui fez diferença.', 'c72'),
+  c('c74', 'p12', 'Simone G.', 96, 4, 'Uma dica: fim de semana tem "blocos" em vez de horários. Manhã de casa, tarde de passeio. Dá previsibilidade sem engessar.'),
+  c('c75', 'p12', 'Rafael O.', 95, 2, 'Blocos! Muito bom, vou montar assim.', 'c74'),
+  c('c76', 'p16', 'Débora F.', 137, 5, 'Aconteceu com uma amiga. Ela pediu por escrito a justificativa pedagógica e a escola voltou atrás.'),
+  c('c77', 'p16', 'Marcos L.', 136, 2, 'Vou pedir por escrito então. Obrigado!', 'c76'),
+  c('c78', 'p17', 'Mariana K.', 147, 6, 'Também comecei este ano. Mudou até minha paciência em casa.'),
+  c('c79', 'p17', 'Juliana R.', 146, 3, 'Exatamente isso! A gente acha que é luxo, mas é necessidade.', 'c78'),
+  c('c80', 'p19', 'Patrícia V.', 168, 2, 'Onde comprou o elástico? É aquele de fisioterapia?'),
+  c('c81', 'p19', 'André F.', 167, 2, 'Esse mesmo, faixa elástica de exercício. Amarrei nas pernas da frente da cadeira.', 'c80'),
+  // p21 — dormir na própria cama
+  c('c82', 'p21', 'Lucas T.', 2.8, 5, 'Que vitória! Quanto tempo ficou em cada degrau da escada?'),
+  c('c83', 'p21', 'Bianca A.', 2.6, 4, 'Uma semana em cada, mais ou menos. Quando ele estava tranquilo três noites seguidas, a gente avançava.', 'c82'),
+  c('c84', 'p21', 'Sofia C.', 2.4, 3, 'Vou fazer exatamente isso. Obrigada por contar o passo a passo!', 'c82', null, 'Bianca A.'),
+  c('c85', 'p21', 'Renata M.', 2.1, 6, 'Isso tem nome, né? A psicóloga daqui chamou de "retirada gradual". Funciona mesmo.'),
+  c('c86', 'p21', 'Bianca A.', 1.9, 2, 'Isso! Foi ela quem sugeriu aqui também.', 'c85'),
+  c('c87', 'p21', 'Equipe Vita', 1.5, 8, 'Que conquista linda, Bianca! Para quem quiser tentar: dá para criar uma tarefa "hora de dormir" na Rotina e registrar como foi cada noite.'),
+  // p22 — horário ou ordem
+  c('c88', 'p22', 'Diego F.', 8.5, 6, 'Com 4 anos, só a ordem. Aqui usamos "primeiro / depois" e um relógio com cores (verde = pode acordar).', undefined, 'diego'),
+  c('c89', 'p22', 'Gustavo H.', 8.2, 2, 'Relógio com cores! Não conhecia.', 'c88'),
+  c('c90', 'p22', 'Beatriz N.', 8, 3, 'Coloca o horário pequenininho no cantinho para você, adulto. Ajuda quem cuida a se organizar.', 'c88', null, 'Gustavo H.'),
+  c('c91', 'p22', 'Fernanda L.', 7, 4, 'Uma foto real de cada atividade funciona melhor que desenho para os menores.'),
+  // p23 — "falta de limite"
+  c('c92', 'p23', 'André F.', 14, 9, 'Mando sempre o material da ABDA (Associação Brasileira do Déficit de Atenção). Curto e com fonte.'),
+  c('c93', 'p23', 'Mariana K.', 13.5, 3, 'Perfeito, vou procurar. Obrigada!', 'c92'),
+  c('c94', 'p23', 'Patrícia V.', 13, 7, 'Minha resposta pronta: "é uma condição do neurodesenvolvimento, com diagnóstico e tratamento. Limite a gente dá, e muito." Encerra a conversa.'),
+  c('c95', 'p23', 'Paulo R.', 12, 5, 'Vou roubar essa frase 😅', 'c94'),
+  c('c96', 'p23', 'Camila T.', 11, 4, 'Às vezes eu só respondo "você está convidada a passar uma tarde aqui". Ninguém aceita.', 'c94', null, 'Patrícia V.'),
+  c('c97', 'p23', 'Mariana K.', 10, 6, 'Vocês são demais. Já me sinto mais leve.'),
+  // p24 — festas
+  c('c98', 'p24', 'Marta S.', 19, 5, 'Também levamos o abafador e um brinquedo de casa. Ter algo conhecido ajuda muito.'),
+  c('c99', 'p24', 'Carla B.', 18, 3, 'Qual é o sinal que vocês combinaram?'),
+  c('c100', 'p24', 'Roberto C.', 17.5, 4, 'Ele aperta minha mão três vezes. Sem precisar falar nada na frente de todo mundo.', 'c99'),
+  c('c101', 'p24', 'Luana P.', 17, 6, 'Que lindo isso. Vou combinar algo parecido.', 'c99', null, 'Roberto C.'),
+  c('c102', 'p24', 'Tiago M.', 16, 2, 'Aqui avisamos os pais do aniversariante antes. Quase sempre eles separam um cantinho mais calmo.'),
+  // p25 — cantinho da calma
+  c('c103', 'p25', 'Helena S.', 38, 6, 'Que ótimo! Vale pedir que o cantinho seja para toda a turma, não só para ele. Evita rótulo.'),
+  c('c104', 'p25', 'Débora F.', 37, 4, 'Foi isso que a professora fez! Virou o cantinho de todo mundo.', 'c103'),
+  c('c105', 'p25', 'Patrícia V.', 35, 2, 'Pode compartilhar como foi o pedido? Quero levar na reunião.'),
+  c('c106', 'p25', 'Débora F.', 34, 3, 'Levei o relatório e uma lista curta: o que é, por que ajuda, quanto custa (quase nada). Foi rápido.', 'c105'),
+  // p26 — revezamento
+  c('c107', 'p26', 'Ana P.', 50, 9, 'Simone, que ideia! Rede de apoio que a gente mesma cria.'),
+  c('c108', 'p26', 'Camila T.', 49, 4, 'Como vocês combinaram as regras? Fico insegura de deixar com outra pessoa.'),
+  c('c109', 'p26', 'Simone G.', 48, 5, 'Começamos com 2 horas e uma folha com o que acalma cada criança. Hoje já é o dia todo.', 'c108'),
+  c('c110', 'p26', 'Juliana R.', 46, 3, 'A folha com o que acalma é genial. Dá para usar o "Sobre meu filho" do app pra isso!', 'c108', null, 'Simone G.'),
+  // p27 — CAA (Plus)
+  c('c111', 'p27', 'Tiago M.', 5.5, 7, 'Pergunta: é verdade que usar prancha atrasa a fala? Ouvi isso de um parente.'),
+  c('c112', 'p27', 'Paula Reis (fono)', 5, 15, 'Ótima pergunta, Tiago. Não: os estudos mostram que a CAA não atrapalha a fala e muitas vezes ajuda. Ela dá um jeito de se comunicar agora, enquanto a fala se desenvolve.', 'c111'),
+  c('c113', 'p27', 'Tiago M.', 4.8, 4, 'Que alívio. Obrigado!', 'c111', null, 'Paula Reis (fono)'),
+  c('c114', 'p27', 'Carla B.', 4, 5, 'Por onde começar em casa? Muitas figuras de uma vez ou poucas?'),
+  c('c115', 'p27', 'Paula Reis (fono)', 3.6, 11, 'Poucas! Comece com 3 a 5 figuras de coisas que a criança realmente quer (água, comida favorita, brinquedo). O pedido precisa "funcionar" logo de cara.', 'c114'),
+  // p28 — medicação (Plus)
+  c('c116', 'p28', 'Equipe Vita', 29, 6, 'Pergunta anotada para a Dra. Renata (neuropediatra) na próxima quinta. Enquanto isso, vale registrar no Acompanhamento como estão as tardes. Ajuda na consulta.'),
+  c('c117', 'p28', 'Viviane T.', 28, 2, 'Ótima ideia, vou começar hoje.', 'c116'),
+  c('c118', 'p28', 'André F.', 26, 3, 'Aqui o médico reavaliou depois de um estirão de crescimento também. Leve anotações de horários.'),
+  // p29 — ir sozinho (adolescência)
+  c('c119', 'p29', 'Lúcia R.', 11, 6, 'Fizemos em etapas: primeiro eu ia 10 metros atrás, depois esperava na esquina, depois só mensagem ao chegar.'),
+  c('c120', 'p29', 'Cláudio M.', 10.5, 3, 'Gostei das etapas. Quanto tempo levou?', 'c119'),
+  c('c121', 'p29', 'Lúcia R.', 10, 4, 'Uns dois meses. E combinamos um "plano B" escrito: o que fazer se algo sair diferente.', 'c119', null, 'Cláudio M.'),
+  c('c122', 'p29', 'Viviane T.', 9, 3, 'O plano B escrito é ouro. Aqui ficou num cartão na mochila.'),
+  // p30 — puberdade (adolescência)
+  c('c123', 'p30', 'Cláudio M.', 44, 4, 'Qual livro vocês usaram? Estamos chegando nessa fase.'),
+  c('c124', 'p30', 'Lúcia R.', 43, 3, 'Te mando o nome por mensagem! Mas qualquer um com desenhos simples e linguagem direta serve.', 'c123'),
+  c('c125', 'p30', 'Equipe Vita', 40, 5, 'Na Roda Plus de novembro teremos uma psicóloga falando sobre puberdade e autismo. Fiquem de olho!'),
   // encontros
   c('c28', 'm1', 'Renata M.', 20, 3, 'Vai ficar gravado? Às 20h estou no banho das crianças.'),
   c('c29', 'm1', 'Equipe Vita', 19, 6, 'Vai sim! A gravação fica disponível por 7 dias para quem se inscreveu.', 'c28'),

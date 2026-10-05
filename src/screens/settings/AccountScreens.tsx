@@ -10,6 +10,7 @@ import { Chip } from '../../components/Chip';
 import { TextField } from '../../components/TextField';
 import { useUI } from '../../components/UIProvider';
 import { useApp } from '../../state/AppContext';
+import { usePlan } from '../../state/usePlan';
 import { formatPhone } from '../../utils/format';
 import { RELATIONS } from '../onboarding/TrustedContact2g';
 
@@ -143,6 +144,7 @@ const DIAGNOSES = ['TDAH', 'TEA', 'TDAH + TEA', 'Em investigação', 'não infor
 export function EditChild({ navigation, route }: any) {
   const { state, saveChild, removeChild, setActiveChild } = useApp();
   const { toast, confirm } = useUI();
+  const { canAddChild, limits, plan, upsell } = usePlan();
   const existing = state.children.find((c) => c.id === route.params?.id);
   const [name, setName] = useState(existing?.name ?? '');
   const [age, setAge] = useState(existing ? String(existing.age) : '');
@@ -156,6 +158,13 @@ export function EditChild({ navigation, route }: any) {
     if (!age || !Number.isInteger(n) || n > 25) e.age = 'Idade inválida';
     setErrors(e);
     if (e.name || e.age) return;
+    if (!existing && !canAddChild) {
+      upsell(
+        plan === 'base' ? 'O Gratuito tem 1 perfil de filho' : `Limite de ${limits.children} perfis de filhos`,
+        plan === 'base' ? 'Com o Plus, você acompanha 2 filhos, cada um com sua rotina, trilhas e diário.' : 'O protótipo permite até 2 perfis. Fale com o suporte se precisar de mais.'
+      );
+      return;
+    }
     const id = existing?.id ?? `c${Date.now()}`;
     saveChild({ id, name: name.trim(), age: n, diagnosis });
     if (!existing) setActiveChild(id);
@@ -265,7 +274,7 @@ const FAQ = [
   { q: 'A IA substitui o terapeuta?', a: 'Não. Ela ajuda a pensar no dia a dia. Diagnóstico, remédios e planos de tratamento são com a equipe que acompanha a criança.' },
   { q: 'O que é o selo "Vita recomenda"?', a: 'Só os lugares que a equipe Vita visitou pessoalmente recebem o selo. Os indicados pela comunidade aparecem separados.' },
   { q: 'O que é o Diário de crises?', a: 'Depois de cada crise, o Vita pergunta em 3 toques o que veio antes, como foi e o que ajudou. Com alguns registros, aparecem padrões — e você pode levar o resumo para o Chat ou para a consulta.' },
-  { q: 'Posso usar sem pagar?', a: 'Sim. O plano Base é gratuito para sempre e o Modo Crise nunca fica atrás de um plano.' },
+  { q: 'Posso usar sem pagar?', a: 'Sim. O plano Gratuito é gratuito para sempre, com Chat ilimitado, e o Modo Crise nunca fica atrás de um plano.' },
 ];
 
 export function Help() {

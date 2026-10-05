@@ -8,6 +8,7 @@ import { BackHeader } from '../../components/BackHeader';
 import { Avatar } from '../../components/Avatar';
 import { useUI } from '../../components/UIProvider';
 import { useApp } from '../../state/AppContext';
+import { usePlan } from '../../state/usePlan';
 
 function Row({ title, sub, onPress, first }: { title: string; sub?: string; onPress: () => void; first?: boolean }) {
   const { palette, type } = useTheme();
@@ -52,6 +53,7 @@ function Section({ label, right, children }: { label: string; right?: React.Reac
 export default function SettingsHome8a({ navigation }: any) {
   const { palette, colors, type } = useTheme();
   const { state, logout, setState } = useApp();
+  const plan = usePlan();
   const { confirm, choose, toast } = useUI();
 
   const photoMenu = () =>
@@ -102,7 +104,7 @@ export default function SettingsHome8a({ navigation }: any) {
         <View style={{ flex: 1 }}>
           <Text style={[type.title, { color: palette.text, fontSize: 20 }]}>{state.parentName}</Text>
           <Text style={[type.caption, { fontSize: 12, color: palette.textMuted, marginTop: 2 }]} numberOfLines={1}>
-            {state.email || 'e-mail não informado'} · plano {state.plan === 'plus' ? 'Plus' : 'Base'}
+            {state.email || 'e-mail não informado'} · plano {plan.name}
           </Text>
         </View>
         <ChevronRight size={16} color={palette.hint} />
@@ -155,6 +157,16 @@ export default function SettingsHome8a({ navigation }: any) {
         <Row first title="Acompanhamento" sub="semana, mês e relatório para consultas" onPress={() => navigation.getParent()?.navigate('TrackingStack')} />
         <Row title="Diário de crises" sub="registros, padrões e análise com a IA" onPress={() => navigation.getParent()?.navigate('CrisisDiary')} />
         <Row title="Respirar 2 minutos" sub="respiração guiada, sem som" onPress={() => navigation.getParent()?.navigate('Breathing')} />
+        <Row
+          title="Acompanhantes"
+          sub={plan.hasCompanions ? (state.companions.length ? `${state.companions.length} pessoa(s) com acesso à rotina` : 'divida a rotina com quem também cuida') : 'Plus · divida a rotina com quem também cuida'}
+          onPress={() => navigation.getParent()?.navigate('Companions')}
+        />
+        <Row
+          title="Profissional de referência"
+          sub={plan.hasProfessional ? 'mensagens e orientação por vídeo' : 'Premium · apoio de uma psicóloga'}
+          onPress={() => navigation.getParent()?.navigate('Professional')}
+        />
       </Section>
 
       <Section label="Preferências">
@@ -170,8 +182,10 @@ export default function SettingsHome8a({ navigation }: any) {
           style={({ pressed }) => ({ backgroundColor: colors.pastelGreen, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.85 : 1 })}
         >
           <View style={{ flex: 1 }}>
-            <Text style={[type.cardTitle, { color: colors.darkAzure, fontSize: 15 }]}>Plano atual: {state.plan === 'plus' ? 'Plus' : 'Base'}</Text>
-            <Text style={[type.caption, { fontSize: 11.5, color: colors.darkAzure, opacity: 0.8, marginTop: 3 }]}>ver planos e o que muda no Plus</Text>
+            <Text style={[type.cardTitle, { color: colors.darkAzure, fontSize: 15 }]}>Plano atual: {plan.name}</Text>
+            <Text style={[type.caption, { fontSize: 11.5, color: colors.darkAzure, opacity: 0.8, marginTop: 3 }]}>
+              {plan.plan === 'base' ? 'ver planos e o que muda no Plus' : plan.plan === 'plus' ? 'ver planos · Premium inclui uma profissional' : 'ver planos e gerenciar assinatura'}
+            </Text>
           </View>
           <ChevronRight size={16} color={colors.darkAzure} />
         </Pressable>

@@ -12,6 +12,7 @@ import {
 import { Coupon, Partner, Review, getPartner } from '../data/partners';
 import { TrackProgress, initialTracks, initialConquests } from '../data/tracks';
 import { getGroup } from '../data/community';
+import type { PlanId } from '../data/plans';
 import { CrisisLogEntry, exampleLog } from '../data/crisisLog';
 import { dateKey } from '../utils/date';
 
@@ -50,7 +51,13 @@ export type StoredState = {
   tasks: Task[];
   mood: Mood;
   moodDate: string | null;
-  plan: 'base' | 'plus';
+  plan: PlanId;
+  /** Acompanhantes convidados (Plus): outro responsável, avó, babá… */
+  companions: { id: string; name: string; email: string; relation: string }[];
+  /** Conversa com a profissional de referência (Premium). */
+  proMessages: { id: string; from: 'me' | 'pro'; text: string; date: string }[];
+  /** Orientação por vídeo agendada (Premium), ISO. */
+  proBooking: string | null;
   tracks: Record<string, TrackProgress>;
   conquests: { id: string; label: string; date: string }[];
   crisisAttempts: CrisisAttempt[];
@@ -106,6 +113,9 @@ const initialState: StoredState = {
   mood: null,
   moodDate: null,
   plan: 'base',
+  companions: [],
+  proMessages: [],
+  proBooking: null,
   tracks: initialTracks,
   conquests: initialConquests,
   crisisAttempts: [],

@@ -14,6 +14,8 @@ import PostThread from '../screens/community/PostThread';
 import GroupDetail from '../screens/community/GroupDetail';
 import CrisisLog from '../screens/crisis/CrisisLog';
 import CrisisDiary from '../screens/crisis/CrisisDiary';
+import Professional from '../screens/plans/Professional';
+import Companions from '../screens/plans/Companions';
 import { useApp } from '../state/AppContext';
 
 const Stack = createNativeStackNavigator();
@@ -40,6 +42,8 @@ export function RootNavigator() {
           <Stack.Screen name="GroupDetail" component={GroupDetail} />
           <Stack.Screen name="CrisisLog" component={CrisisLog} />
           <Stack.Screen name="CrisisDiary" component={CrisisDiary} />
+          <Stack.Screen name="Professional" component={Professional} />
+          <Stack.Screen name="Companions" component={Companions} />
         </>
       )}
     </Stack.Navigator>

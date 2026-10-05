@@ -9,12 +9,14 @@ import { BackHeader } from '../../components/BackHeader';
 import { SOSButton } from '../../components/SOSButton';
 import { useUI } from '../../components/UIProvider';
 import { useApp } from '../../state/AppContext';
+import { usePlan } from '../../state/usePlan';
 import { getTrack } from '../../data/tracks';
 import { formatDayMonth } from '../../utils/date';
 
 export default function TrilhaDetail6b({ navigation, route }: any) {
   const { palette, colors, type } = useTheme();
   const { state, startTrack } = useApp();
+  const { canStartTrack, limits, upsell } = usePlan();
   const { toast } = useUI();
   const track = getTrack(route.params?.id ?? 'alimentacao');
   const progress = state.tracks[track.id] ?? { step: 0, attempts: 0, history: [] };
@@ -106,6 +108,13 @@ export default function TrilhaDetail6b({ navigation, route }: any) {
           <Button
             label="Começar esta trilha"
             onPress={() => {
+              if (!canStartTrack) {
+                upsell(
+                  `${limits.parallelTracks} trilhas em andamento`,
+                  `No plano Gratuito, até ${limits.parallelTracks} trilhas andam ao mesmo tempo. Conclua uma das atuais ou conheça o Plus, com todas as trilhas liberadas.`
+                );
+                return;
+              }
               startTrack(track.id);
               toast('Trilha iniciada. Sem prazo, no ritmo de vocês.');
             }}

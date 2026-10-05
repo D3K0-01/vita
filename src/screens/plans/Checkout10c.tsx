@@ -9,6 +9,7 @@ import { TextField } from '../../components/TextField';
 import { useUI } from '../../components/UIProvider';
 import { useApp } from '../../state/AppContext';
 import { addDays, formatDayMonth } from '../../utils/date';
+import { PLANS, PlanId } from '../../data/plans';
 
 // Protótipo: nenhum pagamento é processado. Os campos só são validados no formato.
 
@@ -49,7 +50,9 @@ function luhn(num: string) {
   return sum % 10 === 0;
 }
 
-export default function Checkout10c({ navigation }: any) {
+export default function Checkout10c({ navigation, route }: any) {
+  const target: PlanId = route.params?.plan === 'premium' ? 'premium' : 'plus';
+  const info = PLANS.find((p) => p.id === target)!;
   const { palette, colors, type } = useTheme();
   const { setState } = useApp();
   const { toast } = useUI();
@@ -76,7 +79,7 @@ export default function Checkout10c({ navigation }: any) {
       setErrors(e);
       if (Object.keys(e).length) return;
     }
-    setState((s) => ({ ...s, plan: 'plus' }));
+    setState((s) => ({ ...s, plan: target }));
     setConfirmed(true);
   };
 
@@ -94,9 +97,12 @@ export default function Checkout10c({ navigation }: any) {
       <ScreenContainer edges={['top', 'bottom']} scroll={false} contentStyle={{ alignItems: 'center', justifyContent: 'center', padding: 30, gap: 12 }}>
         <Text style={[type.title, { color: palette.text, fontSize: 26, textAlign: 'center' }]}>Assinatura confirmada</Text>
         <Text style={[type.body, { color: palette.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 22 }]}>
-          Seus 7 dias grátis do Plus começaram agora. Avisamos 2 dias antes da primeira cobrança, em {formatDayMonth(trialEnd)}.
+          Seus 7 dias grátis do {info.name} começaram agora. Avisamos 2 dias antes da primeira cobrança, em {formatDayMonth(trialEnd)}.
         </Text>
-        <Button label="Voltar para o app" onPress={() => navigation.getParent()?.goBack()} style={{ marginTop: 12, alignSelf: 'stretch' }} />
+        {target === 'premium' ? (
+          <Button label="Conhecer minha profissional de referência" onPress={() => navigation.getParent()?.navigate('Professional')} style={{ marginTop: 12, alignSelf: 'stretch' }} />
+        ) : null}
+        <Button label="Voltar para o app" variant={target === 'premium' ? 'ghost' : 'primary'} onPress={() => navigation.getParent()?.goBack()} style={{ marginTop: 12, alignSelf: 'stretch' }} />
       </ScreenContainer>
     );
   }
@@ -107,11 +113,11 @@ export default function Checkout10c({ navigation }: any) {
 
       <View style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 20, padding: 20 }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <Text style={[type.title, { color: palette.text, fontSize: 24 }]}>Plus</Text>
-          <Text style={[type.bodySm, { fontSize: 16, color: palette.text, fontFamily: 'Lexend_500Medium' }]}>R$ 39,90/mês</Text>
+          <Text style={[type.title, { color: palette.text, fontSize: 24 }]}>{info.name}</Text>
+          <Text style={[type.bodySm, { fontSize: 16, color: palette.text, fontFamily: 'Lexend_500Medium' }]}>{info.price}</Text>
         </View>
         <Text style={[type.body, { color: palette.textMuted, fontSize: 13, marginTop: 10, lineHeight: 21 }]}>
-          Quebras saudáveis programadas, todas as trilhas em paralelo, IA sem limite com histórico da família, rodas mediadas e relatório para consultas.
+          {info.highlights.join(' · ')}
         </Text>
       </View>
 
@@ -171,7 +177,7 @@ export default function Checkout10c({ navigation }: any) {
 
       <View style={{ gap: 6 }}>
         <Button label={method === 'pix' ? 'Já paguei · ativar teste' : 'Confirmar assinatura'} onPress={confirm} />
-        <Button label="Voltar para o plano Base" variant="ghost" onPress={() => navigation.goBack()} />
+        <Button label="Voltar aos planos" variant="ghost" onPress={() => navigation.goBack()} />
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <Lock size={12} color={palette.textFaint} />
           <Text style={[type.caption, { color: palette.textFaint, fontSize: 11 }]}>Protótipo: nenhum pagamento é processado. Valores fictícios.</Text>

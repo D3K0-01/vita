@@ -110,15 +110,8 @@ export const initialTracks: Record<string, TrackProgress> = {
     startedAt: daysAgo(20),
     history: [{ id: 'h5', date: daysAgo(20), phase: 1, advanced: false, note: 'apontou para o copo' }],
   },
-  social: {
-    step: 3,
-    attempts: 1,
-    startedAt: daysAgo(90),
-    history: [
-      { id: 'h6', date: daysAgo(80), phase: 1, advanced: true },
-      { id: 'h7', date: daysAgo(40), phase: 2, advanced: true, note: 'imitou o carrinho e riu' },
-    ],
-  },
+  // começa parada para caber no limite do plano Gratuito (2 trilhas em paralelo)
+  social: { step: 0, attempts: 0, history: [] },
   autonomia: { step: 0, attempts: 0, history: [] },
 };
 

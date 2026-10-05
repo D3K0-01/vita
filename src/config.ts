@@ -30,5 +30,3 @@ export const CHAT_API_URL = resolveChatUrl();
 
 export const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
 
-/** Mensagens de IA por dia no plano Base (o Plus não tem limite). */
-export const BASE_DAILY_AI_LIMIT = 20;

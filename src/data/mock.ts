@@ -66,16 +66,3 @@ export const calmingThings = ['abraço apertado', 'objeto favorito'];
 export type { Post, Meeting } from './community';
 export { upcomingMeetings } from './community';
 
-export const article = {
-  title: 'Por que "quebras saudáveis" não são falhas',
-  source: 'Equipe Vita · leitura de 4 min',
-  body:
-    'Rotina não é sobre perfeição — é sobre previsibilidade. Quando uma pausa é combinada com antecedência, ela deixa de ser uma falha e vira parte do plano. Isso muda completamente como a criança (e o adulto) se relaciona com o dia.',
-  full: [
-    'Rotina não é sobre perfeição — é sobre previsibilidade. Para muitas crianças neurodivergentes, saber o que vem depois reduz a ansiedade e libera energia para o resto do dia.',
-    'Só que a vida real muda: um compromisso atrasa, a avó chega de surpresa, a chuva cancela o parquinho. Quando toda mudança vira "quebra da rotina", cada imprevisto parece um fracasso — para a criança e para quem cuida.',
-    'A ideia das quebras saudáveis é inverter isso. Uma pequena variação, combinada com antecedência, vira parte do plano. "Hoje o banho vai ser 20 minutos mais tarde" dito de manhã é muito diferente de uma mudança anunciada na hora.',
-    'Comece pequeno: uma variação por semana, de baixo impacto, sempre avisada antes. Use o mesmo apoio visual da rotina. Com o tempo, a flexibilidade também vira hábito.',
-    'E se der errado? Tudo bem. A rotina continua ali no dia seguinte — e a tentativa conta.',
-  ],
-};

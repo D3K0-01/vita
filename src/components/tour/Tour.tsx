@@ -39,7 +39,7 @@ function buildSteps(hasRoutine: boolean): Step[] {
     { tab: 'FasesTab', target: 'phases-track', title: 'Pequenos avanços', text: 'Cada trilha anda no ritmo da criança. Registre tentativas — repetir a mesma fase também é progresso.' },
     { tab: 'ParceirosTab', target: 'partners-actions', title: 'Lugares que acolhem', text: 'Veja os parceiros no mapa e seus cupons. O selo "Vita recomenda" só vai para lugares que a equipe visitou.' },
     { tab: 'ComunidadeTab', target: 'community-tabs', title: 'Comunidade', text: 'Converse com outras famílias no feed e nos grupos, e participe dos encontros online e presenciais.' },
-    { tab: 'IATab', target: 'chat-input', title: 'Chat com IA', text: 'Escreva do jeito que der: a IA responde com passos práticos para o dia a dia. Ela não substitui profissionais.' },
+    { tab: 'IATab', target: 'chat-input', title: 'Chat', text: 'Escreva do jeito que der, quando precisar: o Chat responde com passos práticos para o dia a dia. Não substitui profissionais de saúde.' },
     { tab: 'HomeTab', target: 'home-gear', title: 'Ajustes e muito mais', text: 'Na engrenagem ficam o perfil, os filhos, o Acompanhamento, o Diário de crises, a acessibilidade e o modo escuro.' },
     { tab: 'HomeTab', title: 'Tudo pronto!', text: 'Comece pelo que fizer mais sentido hoje. Uma coisa só já basta.' },
   ];
@@ -68,11 +68,21 @@ export function TourTarget({ id, children, style }: { id: string; children: Reac
   );
 }
 
+// mede um elemento na tela; se o navegador não responder em 300 ms, desiste (nunca trava o tour)
 const measure = (ref: React.RefObject<any>) =>
   new Promise<Rect | null>((resolve) => {
     const node = ref.current;
     if (!node?.measureInWindow) return resolve(null);
-    node.measureInWindow((x: number, y: number, w: number, h: number) => resolve(w > 0 && h > 0 ? { x, y, w, h } : null));
+    const timer = setTimeout(() => resolve(null), 300);
+    try {
+      node.measureInWindow((x: number, y: number, w: number, h: number) => {
+        clearTimeout(timer);
+        resolve(w > 0 && h > 0 ? { x, y, w, h } : null);
+      });
+    } catch {
+      clearTimeout(timer);
+      resolve(null);
+    }
   });
 
 export function TourProvider({ children }: { children: React.ReactNode }) {
@@ -118,10 +128,14 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   }, [loaded, state.hasOnboarded, state.tourDone, step, start]);
 
   const end = useCallback(() => {
-    Animated.timing(dimOpacity, { toValue: 0, duration: still ? 0 : 220, useNativeDriver: false }).start(() => {
+    // some com um fade curto e, garantidamente, desmonta a camada escura
+    Animated.timing(dimOpacity, { toValue: 0, duration: still ? 0 : 200, useNativeDriver: false }).start();
+    setTimeout(() => {
       setStep(null);
       setReady(false);
-    });
+      setHasHole(false);
+      dimOpacity.setValue(0);
+    }, still ? 0 : 210);
     setState((s) => ({ ...s, tourDone: true }));
     if (navigationRef.isReady()) (navigationRef as any).navigate('Main', { screen: 'HomeTab' });
   }, [setState, dimOpacity, still]);
@@ -145,8 +159,10 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     if (step === 0) Animated.timing(dimOpacity, { toValue: 1, duration: still ? 0 : 260, useNativeDriver: false }).start();
     if (s.tab && navigationRef.isReady()) (navigationRef as any).navigate('Main', { screen: s.tab });
 
+    let shown = false;
     const show = (r: Rect | null, root: Rect) => {
-      if (cancelled) return;
+      if (cancelled || shown) return;
+      shown = true;
       const pad = 6;
       const target = r
         ? { x: Math.max(4, r.x - pad), y: Math.max(4, r.y - pad), w: Math.min(root.w - 8, r.w + pad * 2), h: r.h + pad * 2 }
@@ -155,7 +171,6 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       setHoleRect(target);
       moveHole(target, step > 0);
       setReady(true);
-      Animated.timing(cardAnim, { toValue: 1, duration: still ? 0 : 260, delay: still ? 0 : 140, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
     };
 
     const run = async () => {
@@ -176,11 +191,34 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       show(null, root ?? frame);
     };
     run();
+    // segurança: se a etapa não ficar pronta em 2 s, mostra a explicação centralizada
+    const watchdog = setTimeout(() => {
+      if (!cancelled) show(null, frame);
+    }, 2000);
     return () => {
       cancelled = true;
+      clearTimeout(watchdog);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
+
+  // O cartão aparece com fade só depois de montado. Antes, a animação começava
+  // junto com a troca do destaque e, na última etapa (sem destaque), o Animated
+  // parava no meio: o cartão ficava invisível e a tela, toda escura.
+  useEffect(() => {
+    if (!ready) return;
+    let live = true;
+    cardAnim.setValue(0);
+    const anim = Animated.timing(cardAnim, { toValue: 1, duration: still ? 0 : 260, delay: still ? 0 : 140, easing: Easing.out(Easing.quad), useNativeDriver: false });
+    // se algo interromper a animação, o cartão aparece mesmo assim
+    anim.start(({ finished }) => {
+      if (!finished && live) cardAnim.setValue(1);
+    });
+    return () => {
+      live = false;
+      anim.stop();
+    };
+  }, [ready, step, cardAnim, still]);
 
   const active = step !== null;
   const s = step !== null ? steps[step] : null;
@@ -237,6 +275,13 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
             )}
             {/* bloqueia toques no app enquanto o tour está aberto */}
             <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+
+            {/* enquanto a etapa carrega, a saída continua sempre à mão */}
+            {!ready && (
+              <Pressable onPress={end} accessibilityRole="button" accessibilityLabel="Pular o tour" style={{ position: 'absolute', top: 12, right: 12, minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: palette.bg }}>
+                <Text style={[type.bodySm, { color: palette.text }]}>Pular tour</Text>
+              </Pressable>
+            )}
 
             {ready && (
               <Animated.View

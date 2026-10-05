@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, Platform, Share } from 'react-native';
-import { ChevronRight, FileDown, NotebookPen } from 'lucide-react-native';
+import { ChevronRight, FileDown, NotebookPen, Lock } from 'lucide-react-native';
 import { insightsFor } from '../../data/crisisLog';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -10,6 +10,7 @@ import { ChildPill } from '../../components/ChildPill';
 import { Button } from '../../components/Button';
 import { useUI } from '../../components/UIProvider';
 import { useApp } from '../../state/AppContext';
+import { usePlan } from '../../state/usePlan';
 import { taskOccursOn, Task } from '../../data/mock';
 import { TRACKS } from '../../data/tracks';
 import { addDays, dateKey, formatDayMonth, formatLongDate, formatWeekRange, monthName, startOfWeek, timeAgo, weekdayLong, weekdayShort } from '../../utils/date';
@@ -29,6 +30,9 @@ export default function TrackingScreen({ navigation }: any) {
   const { state } = useApp();
   const { toast } = useUI();
   const [tab, setTab] = useState<'semana' | 'mês'>('semana');
+  const { hasHistory, upsell } = usePlan();
+  const historyUpsell = () =>
+    upsell('Histórico e exportação são do Plus', 'No Gratuito você acompanha o resumo da semana. O Plus libera o histórico completo (mês a mês) e o relatório para levar às consultas.');
   const today = new Date();
   const todayKey = dateKey(today);
 
@@ -93,6 +97,7 @@ export default function TrackingScreen({ navigation }: any) {
   };
 
   const exportReport = async () => {
+    if (!hasHistory) return historyUpsell();
     const text = summary();
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const w = window.open('', '_blank');
@@ -138,12 +143,15 @@ export default function TrackingScreen({ navigation }: any) {
         {(['semana', 'mês'] as const).map((t) => (
           <Pressable
             key={t}
-            onPress={() => setTab(t)}
+            onPress={() => (t === 'mês' && !hasHistory ? historyUpsell() : setTab(t))}
             accessibilityRole="tab"
             accessibilityState={{ selected: tab === t }}
             style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 11, backgroundColor: tab === t ? palette.surface : 'transparent' }}
           >
-            <Text style={[type.bodySm, { fontSize: 13.5, color: palette.text, fontFamily: tab === t ? 'Lexend_500Medium' : 'Lexend_400Regular' }]}>{t}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              {t === 'mês' && !hasHistory ? <Lock size={12} color={palette.textMuted} /> : null}
+              <Text style={[type.bodySm, { fontSize: 13.5, color: palette.text, fontFamily: tab === t ? 'Lexend_500Medium' : 'Lexend_400Regular' }]}>{t}</Text>
+            </View>
           </Pressable>
         ))}
       </View>
@@ -256,11 +264,11 @@ export default function TrackingScreen({ navigation }: any) {
         accessibilityRole="button"
         style={({ pressed }) => ({ borderWidth: 1, borderColor: palette.chipBorder, borderRadius: 18, padding: 17, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.7 : 1 })}
       >
-        <FileDown size={20} color={palette.text} strokeWidth={1.8} />
+        {hasHistory ? <FileDown size={20} color={palette.text} strokeWidth={1.8} /> : <Lock size={19} color={palette.text} strokeWidth={1.8} />}
         <View style={{ flex: 1 }}>
           <Text style={[type.cardTitle, { color: palette.text, fontSize: 15 }]}>Exportar relatório</Text>
           <Text style={[type.caption, { color: palette.textMuted, fontSize: 11.5, marginTop: 3, lineHeight: 17 }]}>
-            {Platform.OS === 'web' ? 'abre uma versão para imprimir ou salvar em PDF' : 'compartilhe um resumo para levar às consultas'}
+            {!hasHistory ? 'Plus · relatório para levar às consultas' : Platform.OS === 'web' ? 'abre uma versão para imprimir ou salvar em PDF' : 'compartilhe um resumo para levar às consultas'}
           </Text>
         </View>
         <ChevronRight size={16} color={palette.hint} />

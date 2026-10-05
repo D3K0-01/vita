@@ -42,19 +42,19 @@ export default function PlansIntro2f() {
           </LinearGradient>
         </View>
         <View style={{ gap: 11 }}>
-          <Feature text="quebras saudáveis de rotina programadas" />
-          <Feature text="IA sem limite, com o histórico da família" />
-          <Feature text="todas as trilhas em paralelo + relatório para consultas" />
+          <Feature text="tarefas ilimitadas + acompanhantes (outro responsável, avó…)" />
+          <Feature text="todas as trilhas e grupos exclusivos" />
+          <Feature text="histórico completo + relatório para consultas · 2 filhos" />
         </View>
-        <Text style={[type.caption, { fontSize: 11.5, color: colors.offWhite, opacity: 0.65 }]}>Depois R$ 39,90/mês · cancela quando quiser</Text>
+        <Text style={[type.caption, { fontSize: 11.5, color: colors.offWhite, opacity: 0.65 }]}>Depois R$ 27,90/mês · cancela quando quiser. No Premium (R$ 64,90), tudo do Plus + apoio de uma profissional.</Text>
       </View>
 
       <Card>
-        <Text style={[type.titleSm, { color: palette.text, fontSize: 19 }]}>Base · gratuito para sempre</Text>
+        <Text style={[type.titleSm, { color: palette.text, fontSize: 19 }]}>Gratuito · para sempre</Text>
         <View style={{ gap: 8, marginTop: 12 }}>
-          <Text style={[type.bodySm, { color: palette.textMuted, fontSize: 13, opacity: 0.8 }]}>tarefas ilimitadas, para cada filho · filhos ilimitados</Text>
-          <Text style={[type.bodySm, { color: palette.textMuted, fontSize: 13, opacity: 0.8 }]}>1 trilha por vez · comunidade completa · 20 mensagens de IA por dia</Text>
-          <Text style={[type.bodySm, { color: palette.textMuted, fontSize: 13, opacity: 0.8 }]}>Modo Crise completo, sempre disponível, offline</Text>
+          <Text style={[type.bodySm, { color: palette.textMuted, fontSize: 13, opacity: 0.8 }]}>até 15 tarefas por filho · 1 perfil de filho</Text>
+          <Text style={[type.bodySm, { color: palette.textMuted, fontSize: 13, opacity: 0.8 }]}>2 trilhas em paralelo · comunidade completa · Chat ilimitado</Text>
+          <Text style={[type.bodySm, { color: palette.textMuted, fontSize: 13, opacity: 0.8 }]}>Modo Crise completo, sempre disponível, offline · resumo semanal</Text>
         </View>
       </Card>
 

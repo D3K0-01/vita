@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useApp } from '../state/AppContext';
 import { useUI } from './UIProvider';
+import { usePlan } from '../state/usePlan';
 
 // Seletor do filho ativo. A rotina, as fases e a IA passam a falar desse filho.
 export function ChildPill({ showAge = true }: { showAge?: boolean }) {
@@ -12,6 +13,7 @@ export function ChildPill({ showAge = true }: { showAge?: boolean }) {
   const { state, setActiveChild } = useApp();
   const { choose } = useUI();
   const navigation = useNavigation<any>();
+  const { canAddChild, plan, upsell } = usePlan();
 
   const open = () =>
     choose('De quem estamos falando?', [
@@ -20,7 +22,16 @@ export function ChildPill({ showAge = true }: { showAge?: boolean }) {
         hint: c.diagnosis,
         onPress: () => setActiveChild(c.id),
       })),
-      { label: '+ Adicionar filho ou filha', onPress: () => navigation.navigate('SettingsStack', { screen: 'EditChild' }) },
+      canAddChild
+        ? { label: '+ Adicionar filho ou filha', onPress: () => navigation.navigate('SettingsStack', { screen: 'EditChild' }) }
+        : {
+            label: '+ Adicionar filho ou filha',
+            hint: plan === 'base' ? 'o Plus libera 2 perfis' : 'limite de 2 perfis',
+            onPress: () =>
+              plan === 'base'
+                ? upsell('O Gratuito tem 1 perfil de filho', 'Com o Plus, você acompanha 2 filhos, cada um com sua rotina, trilhas e diário.')
+                : undefined,
+          },
     ]);
 
   return (

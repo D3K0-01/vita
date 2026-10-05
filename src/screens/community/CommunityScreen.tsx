@@ -1,26 +1,42 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, Image, TextInput, Linking } from 'react-native';
-import { Search, Heart, Bookmark, X, ChevronRight, ChevronDown, ChevronUp, MapPin, Video, Clock, MessageCircle } from 'lucide-react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, Pressable, Image, TextInput, Linking, Animated, Platform, ScrollView, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { Search, Heart, Bookmark, X, ChevronRight, ChevronDown, ChevronUp, MapPin, Video, Clock, MessageCircle, Lock, BadgeCheck } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../theme/ThemeProvider';
-import { ScreenContainer } from '../../components/ScreenContainer';
 import { SOSButton } from '../../components/SOSButton';
 import { TourTarget } from '../../components/tour/Tour';
 import { Avatar } from '../../components/Avatar';
-import { PostCard, useFeed } from '../../components/community/PostCard';
+import { PostCard, SupporterSeal, useFeed } from '../../components/community/PostCard';
 import { CommentThread, useCommentComposer, useCommentCount } from '../../components/community/CommentThread';
+import { useJoinGroup } from '../../components/community/useJoinGroup';
 import { useUI } from '../../components/UIProvider';
 import { useApp } from '../../state/AppContext';
-import { article } from '../../data/mock';
-import { GROUPS, upcomingMeetings, Meeting } from '../../data/community';
-import { articleCover } from '../../data/images';
+import { usePlan } from '../../state/usePlan';
+import { ARTICLES, VitaArticle } from '../../data/articles';
+import { GROUPS, Group, upcomingMeetings, Meeting } from '../../data/community';
 import { formatDayMonth, weekdayLong, weekdayShort } from '../../utils/date';
 import { pickProfilePhoto } from '../../utils/pickImage';
 
 const TABS = ['Feed', 'Grupos', 'Encontros', 'Meu perfil'] as const;
 type Tab = (typeof TABS)[number];
 
-const ARTICLE_ID = 'article-quebras';
+const PLACEHOLDER: Record<Tab, string> = {
+  Feed: 'buscar no feed',
+  Grupos: 'buscar grupos',
+  Encontros: 'buscar encontros',
+  'Meu perfil': 'buscar nos seus salvos',
+};
+
+/** Busca sem diferenciar acentos e maiúsculas. */
+const norm = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const matches = (q: string, ...fields: (string | undefined)[]) => !q || norm(fields.filter(Boolean).join(' ')).includes(q);
+
+function Empty({ query }: { query: string }) {
+  const { palette, type } = useTheme();
+  return <Text style={[type.body, { color: palette.textMuted, textAlign: 'center', marginTop: 10 }]}>Nada encontrado para "{query}".</Text>;
+}
 
 function Tabs({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {
   const { palette, type } = useTheme();
@@ -56,15 +72,75 @@ function Composer({ label, onPress }: { label: string; onPress: () => void }) {
   );
 }
 
-function FeedTab({ query, navigation }: { query: string; navigation: any }) {
+/** Conteúdo revisado da Equipe Vita, no feed e nos salvos. */
+function ArticleCard({ a, compact }: { a: VitaArticle; compact?: boolean }) {
   const { palette, colors, type } = useTheme();
-  const { state, addPost, toggleIn } = useApp();
+  const { state, toggleIn } = useApp();
+  const { toast } = useUI();
+  const navigation = useNavigation<any>();
+  const liked = state.likedPosts.includes(a.id);
+  const saved = state.savedPosts.includes(a.id);
+  return (
+    <View style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 18, overflow: 'hidden' }}>
+      <Pressable onPress={() => navigation.navigate('Article', { id: a.id })} accessibilityHint="Abre o artigo completo">
+        <View style={{ padding: 16, paddingBottom: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <LinearGradient colors={[colors.accent1, colors.accent2]} style={{ width: 8, height: 8, borderRadius: 4 }} />
+            <Text style={[type.eyebrow, { color: colors.accent2, fontSize: 10.5 }]}>Conteúdo revisado · Vita</Text>
+          </View>
+          <Text style={[type.caption, { fontSize: 11.5, color: palette.textFaint, marginTop: 8 }]}>{a.source}</Text>
+          <Text style={[type.cardTitle, { color: palette.text, fontSize: compact ? 16 : 18, marginTop: 6, lineHeight: compact ? 21 : 23 }]}>{a.title}</Text>
+        </View>
+        {compact ? null : a.cover ? (
+          <Image source={a.cover} style={{ height: 150, width: '100%' }} resizeMode="cover" />
+        ) : (
+          <LinearGradient colors={a.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 110 }} />
+        )}
+        <View style={{ padding: 16, paddingTop: compact ? 0 : 16, paddingBottom: 6 }}>
+          <Text style={[type.body, { fontSize: 13.5, color: palette.textMuted, lineHeight: 20 }]} numberOfLines={compact ? 2 : 3}>
+            {a.body}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 8 }}>
+            <BadgeCheck size={13} color={colors.accent2} />
+            <Text style={[type.caption, { flex: 1, color: palette.textFaint, fontSize: 11 }]} numberOfLines={1}>{a.reviewedBy}</Text>
+          </View>
+          <Text style={[type.bodySm, { color: colors.accent2, fontFamily: 'Lexend_500Medium', marginTop: 8 }]}>ler artigo completo</Text>
+        </View>
+      </Pressable>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: 16, marginBottom: 6, paddingTop: 4, borderTopWidth: 1, borderTopColor: palette.divider }}>
+        <Pressable onPress={() => toggleIn('likedPosts', a.id)} accessibilityRole="button" accessibilityLabel={liked ? 'Descurtir' : 'Curtir'} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40 }}>
+          <Heart size={16} color={liked ? colors.accent2 : palette.text} fill={liked ? colors.accent2 : 'transparent'} strokeWidth={1.8} />
+          <Text style={[type.caption, { color: liked ? colors.accent2 : palette.textMuted }]}>{a.likes + (liked ? 1 : 0)}</Text>
+        </Pressable>
+        <View style={{ flex: 1 }} />
+        <Pressable
+          onPress={() => {
+            toggleIn('savedPosts', a.id);
+            toast(saved ? 'Removido dos salvos' : 'Salvo no seu perfil');
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={saved ? 'Remover dos salvos' : 'Salvar artigo'}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40 }}
+        >
+          <Bookmark size={16} color={saved ? colors.accent2 : palette.text} fill={saved ? colors.accent2 : 'transparent'} strokeWidth={1.8} />
+          <Text style={[type.caption, { color: saved ? colors.accent2 : palette.textMuted }]}>{saved ? 'salvo' : 'salvar'}</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+// os artigos entram intercalados com as conversas: depois da 2ª, da 6ª, da 10ª…
+const ARTICLE_SLOTS = [2, 6, 10, 14];
+
+function FeedTab({ query }: { query: string }) {
+  const { palette, type } = useTheme();
+  const { state, addPost } = useApp();
   const { prompt, choose, toast } = useUI();
-  const q = query.trim().toLowerCase();
-  const posts = useFeed().filter((p) => !q || `${p.body} ${p.author} ${p.group}`.toLowerCase().includes(q));
-  const articleLiked = state.likedPosts.includes(ARTICLE_ID);
-  const articleSaved = state.savedPosts.includes(ARTICLE_ID);
-  const showArticle = !q || `${article.title} ${article.body}`.toLowerCase().includes(q);
+  const { hasExclusiveGroups } = usePlan();
+  const q = norm(query.trim());
+  const posts = useFeed().filter((p) => matches(q, p.body, p.author, p.group));
+  const articles = ARTICLES.filter((a) => matches(q, a.title, a.body, a.full.join(' ')));
 
   const compose = async () => {
     const r = await prompt({
@@ -77,7 +153,7 @@ function FeedTab({ query, navigation }: { query: string; navigation: any }) {
     if (!r) return;
     choose(
       'Publicar em qual grupo?',
-      GROUPS.map((g) => ({
+      GROUPS.filter((g) => !g.exclusive || hasExclusiveGroups).map((g) => ({
         label: g.name,
         hint: state.joinedGroups.includes(g.id) ? 'você participa' : `${g.members.toLocaleString('pt-BR')} famílias`,
         onPress: () => {
@@ -88,133 +164,134 @@ function FeedTab({ query, navigation }: { query: string; navigation: any }) {
     );
   };
 
-  // o artigo entra depois das duas primeiras conversas, como um destaque
-  const ArticleCard = showArticle ? (
-    <View key="article" style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 18, overflow: 'hidden' }}>
-      <Pressable onPress={() => navigation.navigate('Article')} accessibilityRole="button">
-        <View style={{ padding: 16, paddingBottom: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <LinearGradient colors={[colors.accent1, colors.accent2]} style={{ width: 8, height: 8, borderRadius: 4 }} />
-            <Text style={[type.eyebrow, { color: colors.accent2, fontSize: 10.5 }]}>Conteúdo revisado · Vita</Text>
-          </View>
-          <Text style={[type.caption, { fontSize: 11.5, color: palette.textFaint, marginTop: 8 }]}>{article.source}</Text>
-          <Text style={[type.cardTitle, { color: palette.text, fontSize: 18, marginTop: 6, lineHeight: 23 }]}>{article.title}</Text>
-        </View>
-        {articleCover ? (
-          <Image source={articleCover} style={{ height: 150, width: '100%' }} resizeMode="cover" />
-        ) : (
-          <LinearGradient colors={[colors.pastelGreen, colors.greyAzure]} style={{ height: 150 }} />
-        )}
-        <View style={{ padding: 16, paddingBottom: 6 }}>
-          <Text style={[type.body, { fontSize: 13.5, color: palette.textMuted, lineHeight: 20 }]} numberOfLines={3}>
-            {article.body}
-          </Text>
-          <Text style={[type.bodySm, { color: colors.accent2, fontFamily: 'Lexend_500Medium', marginTop: 8 }]}>ler artigo completo</Text>
-        </View>
-      </Pressable>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: 16, marginBottom: 6, paddingTop: 4, borderTopWidth: 1, borderTopColor: palette.divider }}>
-        <Pressable onPress={() => toggleIn('likedPosts', ARTICLE_ID)} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40 }}>
-          <Heart size={16} color={articleLiked ? colors.accent2 : palette.text} fill={articleLiked ? colors.accent2 : 'transparent'} strokeWidth={1.8} />
-          <Text style={[type.caption, { color: articleLiked ? colors.accent2 : palette.textMuted }]}>{34 + (articleLiked ? 1 : 0)}</Text>
-        </Pressable>
-        <View style={{ flex: 1 }} />
-        <Pressable onPress={() => toggleIn('savedPosts', ARTICLE_ID)} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40 }}>
-          <Bookmark size={16} color={articleSaved ? colors.accent2 : palette.text} fill={articleSaved ? colors.accent2 : 'transparent'} strokeWidth={1.8} />
-          <Text style={[type.caption, { color: articleSaved ? colors.accent2 : palette.textMuted }]}>{articleSaved ? 'salvo' : 'salvar'}</Text>
-        </Pressable>
-      </View>
-    </View>
-  ) : null;
+  const items: React.ReactNode[] = [];
+  let ai = 0;
+  posts.forEach((p, i) => {
+    if (ARTICLE_SLOTS.includes(i) && articles[ai]) {
+      items.push(<ArticleCard key={articles[ai].id} a={articles[ai]} />);
+      ai++;
+    }
+    items.push(<PostCard key={p.id} p={p} />);
+  });
+  // artigos que sobraram (feed curto ou busca) vão para o fim
+  articles.slice(ai).forEach((a) => items.push(<ArticleCard key={a.id} a={a} />));
 
   return (
     <View style={{ gap: 14 }}>
-      <Composer label="Contar algo do seu dia…" onPress={compose} />
-      {posts.slice(0, 2).map((p) => (
-        <PostCard key={p.id} p={p} />
-      ))}
-      {ArticleCard}
-      {posts.slice(2).map((p) => (
-        <PostCard key={p.id} p={p} />
-      ))}
-      {q && posts.length === 0 && !showArticle ? <Text style={[type.body, { color: palette.textMuted, textAlign: 'center', marginTop: 10 }]}>Nada encontrado para "{query}".</Text> : null}
+      {!q && <Composer label="Contar algo do seu dia…" onPress={compose} />}
+      {q ? (
+        <Text style={[type.caption, { color: palette.textMuted }]}>
+          {posts.length + articles.length} resultado(s) no feed
+        </Text>
+      ) : null}
+      {items}
+      {q && items.length === 0 ? <Empty query={query} /> : null}
     </View>
   );
 }
 
-function GroupsTab({ navigation }: { navigation: any }) {
+function GroupCard({ g }: { g: Group }) {
   const { palette, colors, type } = useTheme();
-  const { state, toggleIn } = useApp();
-  const { toast } = useUI();
+  const { state } = useApp();
+  const navigation = useNavigation<any>();
   const feed = useFeed();
+  const { toggle, locked: isLocked } = useJoinGroup();
+  const on = state.joinedGroups.includes(g.id);
+  const locked = isLocked(g);
+  const count = feed.filter((p) => p.groupId === g.id).length;
+  return (
+    <Pressable
+      onPress={() => navigation.navigate('GroupDetail', { groupId: g.id })}
+      accessibilityHint={`Abre o grupo ${g.name}`}
+      style={({ pressed }) => ({ backgroundColor: palette.surface, borderWidth: on ? 1.5 : 1, borderColor: on ? colors.accent1 : palette.surfaceBorder, borderRadius: 16, padding: 15, gap: 8, opacity: pressed ? 0.85 : 1 })}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={[type.cardTitle, { color: palette.text, fontSize: 16 }]}>{g.name}</Text>
+          <Text style={[type.caption, { color: palette.textFaint, fontSize: 11.5, marginTop: 3 }]}>
+            {(g.members + (on ? 1 : 0)).toLocaleString('pt-BR')} famílias{locked ? ' · exclusivo Plus' : ` · ${count} ${count === 1 ? 'conversa' : 'conversas'}`}
+          </Text>
+        </View>
+        <Pressable onPress={() => toggle(g)} accessibilityRole="button" accessibilityLabel={on ? `Sair de ${g.name}` : locked ? `${g.name}: exclusivo do Plus` : `Entrar em ${g.name}`} hitSlop={6}>
+          {on ? (
+            <View style={{ borderRadius: 20, paddingVertical: 9, paddingHorizontal: 14, borderWidth: 1.5, borderColor: palette.chipBorder }}>
+              <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 12.5, color: palette.text }}>participando</Text>
+            </View>
+          ) : locked ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 20, paddingVertical: 9, paddingHorizontal: 13, backgroundColor: colors.pastelGreen }}>
+              <Lock size={12} color={colors.darkAzure} />
+              <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 12.5, color: colors.darkAzure }}>Plus</Text>
+            </View>
+          ) : (
+            <LinearGradient colors={[colors.accent1, colors.accent2]} style={{ borderRadius: 20, paddingVertical: 10, paddingHorizontal: 18 }}>
+              <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 12.5, color: '#fff' }}>entrar</Text>
+            </LinearGradient>
+          )}
+        </Pressable>
+      </View>
+      <Text style={[type.bodySm, { color: palette.textMuted, fontSize: 12.5, lineHeight: 19 }]} numberOfLines={2}>
+        {g.description}
+      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        <Text style={[type.caption, { color: colors.accent2, fontFamily: 'Lexend_500Medium' }]}>{locked ? 'ver o grupo' : 'ver conversas'}</Text>
+        <ChevronRight size={13} color={colors.accent2} />
+      </View>
+    </Pressable>
+  );
+}
+
+function GroupsTab({ query }: { query: string }) {
+  const { palette, colors, type } = useTheme();
+  const { state } = useApp();
+  const navigation = useNavigation<any>();
+  const { plan, limits, hasExclusiveGroups } = usePlan();
+  const q = norm(query.trim());
   const joinedCount = state.joinedGroups.length;
-  const ordered = [...GROUPS].sort((a, b) => Number(state.joinedGroups.includes(b.id)) - Number(state.joinedGroups.includes(a.id)));
+  const found = GROUPS.filter((g) => matches(q, g.name, g.description, g.rules.join(' ')));
+  const ordered = [...found].sort((a, b) => Number(state.joinedGroups.includes(b.id)) - Number(state.joinedGroups.includes(a.id)));
+  const open = ordered.filter((g) => !g.exclusive);
+  const exclusive = ordered.filter((g) => g.exclusive);
 
   return (
     <View style={{ gap: 14 }}>
-      <View style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 20, padding: 20 }}>
-        <Text style={[type.title, { color: palette.text, fontSize: 22, lineHeight: 28 }]}>
-          {joinedCount ? `Você participa de ${joinedCount} ${joinedCount === 1 ? 'grupo' : 'grupos'}` : 'Encontre o seu grupo'}
-        </Text>
-        <Text style={[type.body, { color: palette.textMuted, fontSize: 13.5, marginTop: 8, lineHeight: 21 }]}>Toque em um grupo para ver a descrição e as conversas. Entrar e sair é livre.</Text>
-      </View>
-      {ordered.map((g) => {
-        const on = state.joinedGroups.includes(g.id);
-        const count = feed.filter((p) => p.groupId === g.id).length;
-        return (
-          <Pressable
-            key={g.id}
-            onPress={() => navigation.navigate('GroupDetail', { groupId: g.id })}
-            accessibilityHint={`Abre o grupo ${g.name}`}
-            style={({ pressed }) => ({ backgroundColor: palette.surface, borderWidth: on ? 1.5 : 1, borderColor: on ? colors.accent1 : palette.surfaceBorder, borderRadius: 16, padding: 15, gap: 8, opacity: pressed ? 0.85 : 1 })}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={[type.cardTitle, { color: palette.text, fontSize: 16 }]}>{g.name}</Text>
-                <Text style={[type.caption, { color: palette.textFaint, fontSize: 11.5, marginTop: 3 }]}>
-                  {(g.members + (on ? 1 : 0)).toLocaleString('pt-BR')} famílias · {count} {count === 1 ? 'conversa' : 'conversas'}
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => {
-                  toggleIn('joinedGroups', g.id);
-                  toast(on ? `Você saiu de "${g.name}"` : `Você entrou em "${g.name}"`);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={on ? `Sair de ${g.name}` : `Entrar em ${g.name}`}
-                hitSlop={6}
-              >
-                {on ? (
-                  <View style={{ borderRadius: 20, paddingVertical: 9, paddingHorizontal: 14, borderWidth: 1.5, borderColor: palette.chipBorder }}>
-                    <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 12.5, color: palette.text }}>participando</Text>
-                  </View>
-                ) : (
-                  <LinearGradient colors={[colors.accent1, colors.accent2]} style={{ borderRadius: 20, paddingVertical: 10, paddingHorizontal: 18 }}>
-                    <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 12.5, color: '#fff' }}>entrar</Text>
-                  </LinearGradient>
-                )}
-              </Pressable>
-            </View>
-            <Text style={[type.bodySm, { color: palette.textMuted, fontSize: 12.5, lineHeight: 19 }]} numberOfLines={2}>
-              {g.description}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text style={[type.caption, { color: colors.accent2, fontFamily: 'Lexend_500Medium' }]}>ver conversas</Text>
-              <ChevronRight size={13} color={colors.accent2} />
-            </View>
-          </Pressable>
-        );
-      })}
-      <Pressable onPress={() => navigation.navigate('PlansStack')} accessibilityRole="button" style={{ backgroundColor: colors.darkAzure, borderRadius: 18, padding: 18 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 16.5, color: colors.offWhite, flex: 1 }}>Grupos temáticos do Plus</Text>
-          <View style={{ backgroundColor: colors.pastelGreen, borderRadius: 12, paddingVertical: 3, paddingHorizontal: 9 }}>
-            <Text style={{ fontFamily: 'Lexend_600SemiBold', fontSize: 10, color: colors.darkAzure }}>Plus</Text>
-          </View>
+      {!q ? (
+        <View style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 20, padding: 20 }}>
+          <Text style={[type.title, { color: palette.text, fontSize: 22, lineHeight: 28 }]}>
+            {joinedCount ? `Você participa de ${joinedCount} ${joinedCount === 1 ? 'grupo' : 'grupos'}` : 'Encontre o seu grupo'}
+          </Text>
+          <Text style={[type.body, { color: palette.textMuted, fontSize: 13.5, marginTop: 8, lineHeight: 21 }]}>
+            Toque em um grupo para ver a descrição e as conversas.{plan === 'base' ? ` No Gratuito, até ${limits.groups} grupos ao mesmo tempo.` : ''}
+          </Text>
         </View>
-        <Text style={{ fontFamily: 'Lexend_300Light', fontSize: 12.5, lineHeight: 20, color: colors.offWhite, opacity: 0.85, marginTop: 6 }}>
-          Rodas menores com mediação. Os grupos acima seguem abertos para todos.
-        </Text>
-      </Pressable>
+      ) : (
+        <Text style={[type.caption, { color: palette.textMuted }]}>{found.length} grupo(s) encontrado(s)</Text>
+      )}
+      {open.map((g) => (
+        <GroupCard key={g.id} g={g} />
+      ))}
+      {exclusive.length > 0 && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
+          <Text style={[type.eyebrow, { color: palette.hint, flex: 1 }]}>Grupos exclusivos do Plus</Text>
+          {hasExclusiveGroups ? <SupporterSeal /> : <Lock size={13} color={palette.hint} />}
+        </View>
+      )}
+      {exclusive.map((g) => (
+        <GroupCard key={g.id} g={g} />
+      ))}
+      {!q && !hasExclusiveGroups && (
+        <Pressable onPress={() => navigation.navigate('PlansStack')} accessibilityRole="button" style={{ backgroundColor: colors.darkAzure, borderRadius: 18, padding: 18 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Text style={{ fontFamily: 'BricolageGrotesque_500Medium', fontSize: 16.5, color: colors.offWhite, flex: 1 }}>Rodas menores, com mediação</Text>
+            <View style={{ backgroundColor: colors.pastelGreen, borderRadius: 12, paddingVertical: 3, paddingHorizontal: 9 }}>
+              <Text style={{ fontFamily: 'Lexend_600SemiBold', fontSize: 10, color: colors.darkAzure }}>Plus</Text>
+            </View>
+          </View>
+          <Text style={{ fontFamily: 'Lexend_300Light', fontSize: 12.5, lineHeight: 20, color: colors.offWhite, opacity: 0.85, marginTop: 6 }}>
+            Grupos exclusivos e selo de apoiador(a). Os grupos abertos seguem livres para todos.
+          </Text>
+        </Pressable>
+      )}
+      {q && found.length === 0 ? <Empty query={query} /> : null}
     </View>
   );
 }
@@ -331,34 +408,44 @@ function MeetingCard({ m, expanded, onToggle }: { m: Meeting; expanded: boolean;
   );
 }
 
-function MeetingsTab({ initialOpen }: { initialOpen?: string }) {
-  const { colors, type } = useTheme();
+function MeetingsTab({ initialOpen, query }: { initialOpen?: string; query: string }) {
+  const { palette, colors, type } = useTheme();
   const { state } = useApp();
-  const meetings = upcomingMeetings();
+  const q = norm(query.trim());
+  const all = upcomingMeetings();
+  const meetings = all.filter((m) => matches(q, m.title, m.place, m.address, m.host, m.description, m.mode));
   const [open, setOpen] = useState<string | null>(initialOpen ?? null);
-  const mine = meetings.filter((m) => state.meetings.includes(m.id));
+  const mine = all.filter((m) => state.meetings.includes(m.id));
   return (
     <View style={{ gap: 14 }}>
+      {q ? <Text style={[type.caption, { color: palette.textMuted }]}>{meetings.length} encontro(s) encontrado(s)</Text> : null}
       {meetings.map((m) => (
         <MeetingCard key={m.id} m={m} expanded={open === m.id} onToggle={() => setOpen((o) => (o === m.id ? null : m.id))} />
       ))}
-      <View style={{ backgroundColor: colors.pastelGreen, borderRadius: 18, padding: 18 }}>
-        <Text style={[type.cardTitle, { color: colors.darkAzure, fontSize: 16.5 }]}>Suas inscrições</Text>
-        <Text style={[type.caption, { color: colors.darkAzure, fontSize: 12.5, opacity: 0.85, marginTop: 5 }]}>
-          {mine.length ? mine.map((m) => `${m.title} (${formatDayMonth(new Date(m.date))})`).join(' · ') : 'Nenhuma inscrição ainda. Toque num encontro para ver os detalhes.'}
-        </Text>
-      </View>
+      {q && meetings.length === 0 ? <Empty query={query} /> : null}
+      {!q && (
+        <View style={{ backgroundColor: colors.pastelGreen, borderRadius: 18, padding: 18 }}>
+          <Text style={[type.cardTitle, { color: colors.darkAzure, fontSize: 16.5 }]}>Suas inscrições</Text>
+          <Text style={[type.caption, { color: colors.darkAzure, fontSize: 12.5, opacity: 0.85, marginTop: 5 }]}>
+            {mine.length ? mine.map((m) => `${m.title} (${formatDayMonth(new Date(m.date))})`).join(' · ') : 'Nenhuma inscrição ainda. Toque num encontro para ver os detalhes.'}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
 
-function ProfileTab() {
+function ProfileTab({ query }: { query: string }) {
   const { palette, colors, type } = useTheme();
   const { state, setState } = useApp();
   const { prompt, toast } = useUI();
+  const { name: planLabel, atLeast } = usePlan();
+  const q = norm(query.trim());
   const feed = useFeed();
-  const saved = feed.filter((p) => state.savedPosts.includes(p.id));
-  const myPosts = state.posts;
+  const savedPosts = feed.filter((p) => state.savedPosts.includes(p.id) && matches(q, p.body, p.author, p.group));
+  const savedArticles = ARTICLES.filter((a) => state.savedPosts.includes(a.id) && matches(q, a.title, a.body));
+  const myPosts = state.posts.filter((p) => matches(q, p.body, p.group));
+  const savedCount = feed.filter((p) => state.savedPosts.includes(p.id)).length + ARTICLES.filter((a) => state.savedPosts.includes(a.id)).length;
 
   const edit = async () => {
     const r = await prompt({
@@ -382,33 +469,40 @@ function ProfileTab() {
 
   return (
     <View style={{ gap: 18 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <Pressable onPress={changePhoto} accessibilityRole="button" accessibilityLabel="Trocar foto de perfil">
-          <Avatar person="me" name={state.parentName} size={58} ring />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={[type.title, { color: palette.text, fontSize: 22 }]}>{state.parentName}</Text>
-          <Text style={[type.caption, { color: palette.textMuted, fontSize: 12, marginTop: 2 }]}>
-            {state.relation} de {state.children.length} · {state.plan === 'plus' ? 'apoiador(a) Plus' : 'plano Base'}
-          </Text>
-        </View>
-        <Pressable onPress={edit} accessibilityRole="button" style={{ paddingVertical: 10, paddingLeft: 10 }}>
-          <Text style={[type.bodySm, { color: colors.accent2, fontSize: 13, fontFamily: 'Lexend_500Medium' }]}>editar</Text>
-        </Pressable>
-      </View>
-
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        {[
-          { n: state.joinedGroups.length, l: 'grupos' },
-          { n: state.savedPosts.length, l: 'salvos' },
-          { n: state.meetings.length, l: 'encontros' },
-        ].map((s) => (
-          <View key={s.l} style={{ flex: 1, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 16, padding: 16, alignItems: 'center' }}>
-            <Text style={{ fontFamily: 'BricolageGrotesque_600SemiBold', fontSize: 22, color: palette.text }}>{s.n}</Text>
-            <Text style={[type.caption, { fontSize: 11.5, color: palette.textMuted, marginTop: 2 }]}>{s.l}</Text>
+      {!q && (
+        <>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <Pressable onPress={changePhoto} accessibilityRole="button" accessibilityLabel="Trocar foto de perfil">
+              <Avatar person="me" name={state.parentName} size={58} ring />
+            </Pressable>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[type.title, { color: palette.text, fontSize: 22, flexShrink: 1 }]} numberOfLines={1}>{state.parentName}</Text>
+                {atLeast('plus') ? <SupporterSeal /> : null}
+              </View>
+              <Text style={[type.caption, { color: palette.textMuted, fontSize: 12, marginTop: 2 }]}>
+                {state.relation} de {state.children.length} · {atLeast('plus') ? `apoiador(a) ${planLabel}` : 'plano Gratuito'}
+              </Text>
+            </View>
+            <Pressable onPress={edit} accessibilityRole="button" style={{ paddingVertical: 10, paddingLeft: 10 }}>
+              <Text style={[type.bodySm, { color: colors.accent2, fontSize: 13, fontFamily: 'Lexend_500Medium' }]}>editar</Text>
+            </Pressable>
           </View>
-        ))}
-      </View>
+
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {[
+              { n: state.joinedGroups.length, l: 'grupos' },
+              { n: savedCount, l: 'salvos' },
+              { n: state.meetings.length, l: 'encontros' },
+            ].map((s) => (
+              <View key={s.l} style={{ flex: 1, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 16, padding: 16, alignItems: 'center' }}>
+                <Text style={{ fontFamily: 'BricolageGrotesque_600SemiBold', fontSize: 22, color: palette.text }}>{s.n}</Text>
+                <Text style={[type.caption, { fontSize: 11.5, color: palette.textMuted, marginTop: 2 }]}>{s.l}</Text>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
 
       {myPosts.length > 0 && (
         <View style={{ gap: 10 }}>
@@ -421,7 +515,15 @@ function ProfileTab() {
 
       <View style={{ gap: 10 }}>
         <Text style={[type.eyebrow, { color: palette.hint }]}>Salvos</Text>
-        {saved.length ? saved.map((p) => <PostCard key={p.id} p={p} />) : <Text style={[type.bodySm, { color: palette.textMuted }]}>Toque em "salvar" numa publicação para guardar aqui.</Text>}
+        {savedArticles.map((a) => (
+          <ArticleCard key={a.id} a={a} compact />
+        ))}
+        {savedPosts.map((p) => (
+          <PostCard key={p.id} p={p} />
+        ))}
+        {savedArticles.length + savedPosts.length === 0 ? (
+          q ? <Empty query={query} /> : <Text style={[type.bodySm, { color: palette.textMuted }]}>Toque em "salvar" numa publicação ou artigo para guardar aqui.</Text>
+        ) : null}
       </View>
     </View>
   );
@@ -433,68 +535,113 @@ export default function CommunityScreen({ navigation, route }: any) {
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState('');
   const [meetingToOpen, setMeetingToOpen] = useState<string | undefined>();
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Cabeçalho (título, busca e abas) some ao descer e volta com um leve gesto para cima.
+  const [headerH, setHeaderH] = useState(108);
+  const offset = useRef(new Animated.Value(0)).current;
+  const hidden = useRef(false);
+  const lastY = useRef(0);
+  const setHidden = (h: boolean) => {
+    if (hidden.current === h) return;
+    hidden.current = h;
+    Animated.timing(offset, { toValue: h ? -headerH : 0, duration: 200, useNativeDriver: Platform.OS !== 'web' }).start();
+  };
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const dy = y - lastY.current;
+    lastY.current = y;
+    if (y < headerH || searching) return setHidden(false);
+    if (dy > 6) setHidden(true);
+    else if (dy < -4) setHidden(false);
+  };
+
+  const changeTab = (t: Tab) => {
+    setTab(t);
+    setHidden(false);
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  };
 
   // a Home pode abrir direto em "Encontros" (e já com um encontro aberto)
   useEffect(() => {
     const t = route.params?.tab as Tab | undefined;
     if (t && TABS.includes(t)) {
-      setTab(t);
+      changeTab(t);
       if (route.params?.meetingId) setMeetingToOpen(route.params.meetingId);
       navigation.setParams({ tab: undefined, meetingId: undefined });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route.params?.tab, route.params?.meetingId, navigation]);
 
   return (
-    <ScreenContainer floating={<SOSButton />} contentStyle={{ paddingHorizontal: 20, paddingTop: 10, gap: 14 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 }}>
-        {searching ? (
-          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.chipBorder, borderRadius: 22, paddingLeft: 14 }}>
-            <Search size={16} color={palette.hint} />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              autoFocus
-              placeholder="buscar no feed"
-              placeholderTextColor={palette.textFaint}
-              style={[{ flex: 1, minHeight: 44, fontFamily: 'Lexend_400Regular', fontSize: 14.5, color: palette.text }, { outlineStyle: 'none' } as any]}
-            />
-            <Pressable
-              onPress={() => {
-                setSearching(false);
-                setQuery('');
-              }}
-              accessibilityLabel="Fechar busca"
-              style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
-            >
-              <X size={17} color={palette.hint} />
-            </Pressable>
-          </View>
-        ) : (
-          <>
-            <Text style={[type.title, { color: palette.text }]}>Comunidade</Text>
-            <Pressable
-              onPress={() => {
-                setSearching(true);
-                setTab('Feed');
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Buscar"
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingLeft: 10 }}
-            >
-              <Search size={17} color={palette.text} strokeWidth={1.9} />
-              <Text style={[type.caption, { color: palette.textMuted, fontSize: 12.5 }]}>buscar</Text>
-            </Pressable>
-          </>
-        )}
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top']}>
+      <View style={{ flex: 1, overflow: 'hidden' }}>
+        <ScrollView
+          ref={scrollRef}
+          style={{ flex: 1 }}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: headerH + 14, paddingBottom: 96 }}
+        >
+          {tab === 'Feed' && <FeedTab query={query} />}
+          {tab === 'Grupos' && <GroupsTab query={query} />}
+          {tab === 'Encontros' && <MeetingsTab key={meetingToOpen ?? 'none'} initialOpen={meetingToOpen} query={query} />}
+          {tab === 'Meu perfil' && <ProfileTab query={query} />}
+        </ScrollView>
 
-      <TourTarget id="community-tabs">
-        <Tabs active={tab} onChange={setTab} />
-      </TourTarget>
-      {tab === 'Feed' && <FeedTab query={query} navigation={navigation} />}
-      {tab === 'Grupos' && <GroupsTab navigation={navigation} />}
-      {tab === 'Encontros' && <MeetingsTab key={meetingToOpen ?? 'none'} initialOpen={meetingToOpen} />}
-      {tab === 'Meu perfil' && <ProfileTab />}
-    </ScreenContainer>
+        <Animated.View
+          onLayout={(e) => setHeaderH(Math.round(e.nativeEvent.layout.height))}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 10, backgroundColor: palette.bg, zIndex: 2, transform: [{ translateY: offset }] }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, marginBottom: 6 }}>
+            {searching ? (
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.chipBorder, borderRadius: 22, paddingLeft: 14 }}>
+                <Search size={16} color={palette.hint} />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  autoFocus
+                  placeholder={PLACEHOLDER[tab]}
+                  placeholderTextColor={palette.textFaint}
+                  accessibilityLabel={PLACEHOLDER[tab]}
+                  returnKeyType="search"
+                  style={[{ flex: 1, minHeight: 44, fontFamily: 'Lexend_400Regular', fontSize: 14.5, color: palette.text }, { outlineStyle: 'none' } as any]}
+                />
+                <Pressable
+                  onPress={() => {
+                    setSearching(false);
+                    setQuery('');
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Fechar busca"
+                  style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <X size={17} color={palette.hint} />
+                </Pressable>
+              </View>
+            ) : (
+              <>
+                <Text style={[type.title, { color: palette.text }]}>Comunidade</Text>
+                <Pressable
+                  onPress={() => setSearching(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={PLACEHOLDER[tab]}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingLeft: 10 }}
+                >
+                  <Search size={17} color={palette.text} strokeWidth={1.9} />
+                  <Text style={[type.caption, { color: palette.textMuted, fontSize: 12.5 }]}>buscar</Text>
+                </Pressable>
+              </>
+            )}
+          </View>
+          <TourTarget id="community-tabs">
+            <Tabs active={tab} onChange={changeTab} />
+          </TourTarget>
+        </Animated.View>
+      </View>
+      <SOSButton />
+    </SafeAreaView>
   );
 }

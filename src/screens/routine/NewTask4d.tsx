@@ -8,6 +8,7 @@ import { Button } from '../../components/Button';
 import { TextField } from '../../components/TextField';
 import { useUI } from '../../components/UIProvider';
 import { useApp } from '../../state/AppContext';
+import { usePlan } from '../../state/usePlan';
 import type { Repeat } from '../../data/mock';
 import { formatHour, parseHour } from '../../utils/date';
 
@@ -23,6 +24,8 @@ export default function NewTask4d({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
   const { state, addTask, updateTask, deleteTask } = useApp();
   const { confirm, toast } = useUI();
+  const { canAddTask, limits, plan, upsell } = usePlan();
+  const childTasks = state.tasks.filter((t) => t.childId === state.activeChildId).length;
   const editing = state.tasks.find((t) => t.id === route.params?.taskId);
 
   const [title, setTitle] = useState(editing?.label ?? '');
@@ -40,6 +43,13 @@ export default function NewTask4d({ navigation, route }: any) {
     if (!parsed) e.time = 'Horário inválido. Ex: 7h30 ou 16:00';
     setErrors(e);
     if (e.title || e.time || !parsed) return;
+    if (!editing && !canAddTask) {
+      upsell(
+        `Limite de ${limits.tasksPerChild} tarefas por filho`,
+        `No plano Gratuito, cada filho tem até ${limits.tasksPerChild} tarefas na rotina. Edite ou exclua uma tarefa, ou conheça o Plus: tarefas ilimitadas e acompanhantes.`
+      );
+      return;
+    }
     const data = { label: title.trim(), time: parsed, category, repeat, reminder, durationMin: duration || undefined };
     if (editing) {
       updateTask(editing.id, data);
@@ -83,6 +93,11 @@ export default function NewTask4d({ navigation, route }: any) {
         </View>
 
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 8, paddingBottom: 16, gap: 20 }}>
+          {!editing && plan === 'base' && childTasks >= limits.tasksPerChild - 3 ? (
+            <Text style={[type.caption, { color: palette.textMuted, fontSize: 12, marginBottom: -8 }]}>
+              {Math.min(childTasks, limits.tasksPerChild)} de {limits.tasksPerChild} tarefas de {state.childName} · plano Gratuito
+            </Text>
+          ) : null}
           <TextField label="Título" value={title} onChangeText={setTitle} placeholder="ex: lição de casa" maxLength={50} error={errors.title} autoFocus={!editing} />
 
           <View>

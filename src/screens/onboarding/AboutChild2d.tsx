@@ -7,6 +7,7 @@ import { Card } from '../../components/Card';
 import { Chip } from '../../components/Chip';
 import { TextField } from '../../components/TextField';
 import { useUI } from '../../components/UIProvider';
+import { LIMITS } from '../../data/plans';
 import { useApp } from '../../state/AppContext';
 import type { Child } from '../../data/mock';
 import { OnboardingShell, FieldLabel } from './OnboardingShell';
@@ -61,7 +62,7 @@ export const askChild = async (prompt: ReturnType<typeof useUI>['prompt'], curre
 export default function AboutChild2d({ navigation }: any) {
   const { palette, colors, type, radii } = useTheme();
   const { state, setState } = useApp();
-  const { prompt } = useUI();
+  const { prompt, toast } = useUI();
   const first = state.children[0];
   const [name, setName] = useState(first?.name ?? '');
   const [age, setAge] = useState(first ? String(first.age) : '');
@@ -88,6 +89,9 @@ export default function AboutChild2d({ navigation }: any) {
   };
 
   const addChild = async () => {
+    if (1 + others.length >= LIMITS[state.plan].children) {
+      return toast(`O plano Gratuito tem ${LIMITS.base.children} perfil de filho. No Plus, você acompanha até ${LIMITS.plus.children}.`);
+    }
     const child = await askChild(prompt);
     if (child) setOthers((o) => [...o, child]);
   };
@@ -186,7 +190,7 @@ export default function AboutChild2d({ navigation }: any) {
         <Plus size={18} color={colors.accent2} strokeWidth={2} />
         <View>
           <Text style={[type.body, { fontSize: 14, color: palette.text }]}>Adicionar outro filho</Text>
-          <Text style={[type.caption, { fontSize: 11.5, color: palette.textFaint, marginTop: 2 }]}>quantos precisar, em qualquer plano</Text>
+          <Text style={[type.caption, { fontSize: 11.5, color: palette.textFaint, marginTop: 2 }]}>no Plus e no Premium, até 2 perfis</Text>
         </View>
       </Pressable>
     </OnboardingShell>

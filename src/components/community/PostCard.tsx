@@ -6,14 +6,32 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { Avatar } from '../Avatar';
 import { useUI } from '../UIProvider';
 import { useApp } from '../../state/AppContext';
-import { POSTS, Post } from '../../data/community';
+import { POSTS, Post, GROUPS } from '../../data/community';
+import { PLAN_RANK, PlanId } from '../../data/plans';
 import { timeAgo } from '../../utils/date';
 import { useCommentCount } from './CommentThread';
 
-/** Feed completo: publicações do usuário + exemplos, sem as ocultadas. */
+const SORTED = [...POSTS].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+const EXCLUSIVE = new Set(GROUPS.filter((g) => g.exclusive).map((g) => g.id));
+
+/**
+ * Feed completo: publicações do usuário + exemplos, sem as ocultadas.
+ * Conversas dos grupos exclusivos só aparecem para Plus e Premium.
+ */
 export function useFeed() {
   const { state } = useApp();
-  return [...state.posts, ...POSTS].filter((p) => !state.hiddenPosts.includes(p.id));
+  const plus = PLAN_RANK[(state.plan ?? 'base') as PlanId] >= PLAN_RANK.plus;
+  return [...state.posts, ...SORTED].filter((p) => !state.hiddenPosts.includes(p.id) && (plus || !EXCLUSIVE.has(p.groupId)));
+}
+
+/** Selo discreto de apoiador(a) Plus/Premium. */
+export function SupporterSeal() {
+  const { colors } = useTheme();
+  return (
+    <View style={{ backgroundColor: colors.pastelGreen, borderRadius: 8, paddingVertical: 1.5, paddingHorizontal: 6, marginLeft: 6 }} accessibilityLabel="apoiador(a) Plus">
+      <Text style={{ fontFamily: 'Lexend_600SemiBold', fontSize: 9, letterSpacing: 0.4, color: colors.darkAzure }}>PLUS</Text>
+    </View>
+  );
 }
 
 export function findPost(id: string, mine: Post[]) {
@@ -47,6 +65,7 @@ export function PostCard({ p, highlighted, hideGroup }: Props) {
   const saved = state.savedPosts.includes(p.id);
   const comments = useCommentCount(p.id);
   const fresh = p.mine && Date.now() - new Date(p.createdAt).getTime() < 2 * 60000;
+  const supporter = p.supporter || (p.mine && PLAN_RANK[(state.plan ?? 'base') as PlanId] >= PLAN_RANK.plus);
 
   const open = () => {
     if (!highlighted) navigation.navigate('PostThread', { postId: p.id });
@@ -102,10 +121,13 @@ export function PostCard({ p, highlighted, hideGroup }: Props) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Avatar person={p.avatar === 'me' ? 'me' : p.avatar} name={p.author} size={highlighted ? 40 : 34} />
         <View style={{ flex: 1 }}>
-          <Text style={[type.bodySm, { fontSize: 13.5, color: palette.text, fontFamily: 'Lexend_500Medium' }]}>
-            {p.author}
-            {p.mine ? ' · você' : ''}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={[type.bodySm, { fontSize: 13.5, color: palette.text, fontFamily: 'Lexend_500Medium', flexShrink: 1 }]} numberOfLines={1}>
+              {p.author}
+              {p.mine ? ' · você' : ''}
+            </Text>
+            {supporter ? <SupporterSeal /> : null}
+          </View>
           <Text style={[type.caption, { fontSize: 11, color: palette.textFaint, marginTop: 1 }]} numberOfLines={1}>
             {hideGroup ? '' : `${p.group} · `}
             {timeAgo(p.createdAt)}

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, useWindowDimensions } from 'react-native';
-import { History, Info, ChevronRight, ArrowUp, SquarePen, WifiOff } from 'lucide-react-native';
+import { History, Info, ChevronRight, ArrowUp, SquarePen, WifiOff, Stethoscope } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ChildPill } from '../../components/ChildPill';
@@ -8,8 +8,8 @@ import { TourTarget } from '../../components/tour/Tour';
 import { useUI } from '../../components/UIProvider';
 import { useApp, ChatMessage } from '../../state/AppContext';
 import { askVita } from '../../services/ai';
-import { BASE_DAILY_AI_LIMIT } from '../../config';
-import { dateKey, formatDayMonth } from '../../utils/date';
+import { usePlan } from '../../state/usePlan';
+import { formatDayMonth } from '../../utils/date';
 
 const SUGGESTIONS = ['Como lidar com a hora de dormir?', 'Ele não quer sair de casa para a terapia', 'Dicas para a lição de casa', 'Estou exausta(o) hoje'];
 
@@ -49,20 +49,12 @@ export default function ChatIA5a({ navigation, route }: any) {
     return () => clearTimeout(t);
   }, [messages.length, loading]);
 
-  const today = dateKey();
-  const sentToday = messages.filter((m) => m.from === 'user' && dateKey(new Date(m.date)) === today).length;
-  const limitReached = state.plan === 'base' && sentToday >= BASE_DAILY_AI_LIMIT;
+  // O Chat é ilimitado em todos os planos; o Plus ganha Crise prioritário e o Premium, a profissional.
+  const { atLeast, hasProfessional } = usePlan();
 
   const send = async (textArg?: string) => {
     const text = (textArg ?? draft).trim();
     if (!text || loading) return;
-    if (limitReached) {
-      choose(`Você usou as ${BASE_DAILY_AI_LIMIT} mensagens de hoje`, [
-        { label: 'Conhecer o Plus (IA sem limite)', onPress: () => navigation.navigate('PlansStack') },
-        { label: 'Abrir o Modo Crise', hint: 'sempre liberado, em qualquer plano', onPress: () => navigation.navigate('CrisisStack', { screen: 'Triage5b' }) },
-      ]);
-      return;
-    }
     const userMsg: ChatMessage = { id: `u${Date.now()}`, from: 'user', text, date: new Date().toISOString() };
     const history = [...messages, userMsg];
     setDraft('');
@@ -124,6 +116,10 @@ export default function ChatIA5a({ navigation, route }: any) {
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10, gap: 8 }}>
         <Text style={[type.title, { color: palette.text }]}>Chat</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Pressable onPress={() => navigation.navigate('Professional')} accessibilityRole="button" accessibilityLabel={hasProfessional ? 'Falar com a profissional de referência' : 'Profissional humano (Premium)'} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+            <Stethoscope size={19} color={palette.text} strokeWidth={1.8} />
+            {hasProfessional && state.proMessages.some((m) => m.from === 'pro') ? <View style={{ position: 'absolute', top: 10, right: 10, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent1 }} /> : null}
+          </Pressable>
           <Pressable onPress={newConversation} accessibilityRole="button" accessibilityLabel="Nova conversa" style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
             <SquarePen size={19} color={palette.text} strokeWidth={1.8} />
           </Pressable>
@@ -146,7 +142,7 @@ export default function ChatIA5a({ navigation, route }: any) {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[type.cardTitle, { color: colors.offWhite, fontSize: 15 }]}>Modo Crise</Text>
-            <Text style={[type.caption, { color: colors.offWhite, fontSize: 11.5, opacity: 0.8 }]}>passo a passo agora, em 1 toque</Text>
+            <Text style={[type.caption, { color: colors.offWhite, fontSize: 11.5, opacity: 0.8 }]}>{atLeast('plus') ? 'prioritário · passo a passo agora, em 1 toque' : 'passo a passo agora, em 1 toque'}</Text>
           </View>
           <ChevronRight size={18} color={colors.offWhite} />
         </Pressable>
@@ -284,11 +280,6 @@ export default function ChatIA5a({ navigation, route }: any) {
           </View>
           {draft.length > 400 && (
             <Text style={[type.caption, { fontSize: 10.5, color: palette.textFaint, textAlign: 'right', marginTop: 4, marginRight: 60 }]}>{draft.length}/1500</Text>
-          )}
-          {state.plan === 'base' && (
-            <Text style={[type.caption, { fontSize: 10.5, color: palette.textFaint, textAlign: 'center', marginTop: 6 }]}>
-              {Math.min(sentToday, BASE_DAILY_AI_LIMIT)} de {BASE_DAILY_AI_LIMIT} mensagens hoje · plano Base
-            </Text>
           )}
         </View>
         </TourTarget>
