@@ -9,7 +9,7 @@ import type { ImageSourcePropType } from 'react-native';
 export type AvatarKey = 'camila' | 'julia' | 'diego';
 
 export const avatars: Record<AvatarKey, ImageSourcePropType | null> = {
-  // Camila — a usuária do app (Home, Perfil e ajustes)
+  // Camila — a usuária do app (Home e Perfil)
   camila: require('../../assets/avatars/camila.jpg'),
 
   // Julia — autora do post "Dia difícil hoje, alguém por perto?" (Comunidade)

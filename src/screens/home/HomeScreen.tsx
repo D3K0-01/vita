@@ -56,21 +56,21 @@ export default function HomeScreen({ navigation }: any) {
           </TourTarget>
         </View>
       </View>
+      <TourTarget id="home-gear">
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Pressable onPress={() => navigation.navigate('SettingsStack')} accessibilityRole="button" accessibilityLabel="Perfil e ajustes">
+        <Pressable onPress={() => navigation.navigate('SettingsStack', { screen: 'ProfileHome' })} accessibilityRole="button" accessibilityLabel="Seu perfil">
           <Avatar person="me" name={state.parentName} size={44} ring />
         </Pressable>
-        <TourTarget id="home-gear">
         <Pressable
-          onPress={() => navigation.navigate('SettingsStack')}
+          onPress={() => navigation.navigate('SettingsStack', { screen: 'SettingsHome8a' })}
           accessibilityRole="button"
           accessibilityLabel="Configurações"
           style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}
         >
           <Settings size={20} color={palette.text} strokeWidth={1.8} />
         </Pressable>
-        </TourTarget>
       </View>
+      </TourTarget>
     </View>
   );
 

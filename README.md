@@ -72,6 +72,7 @@ Revisão focada em uso no celular, mantendo a identidade visual (paleta, tipogra
 - **Tour guiado:** no primeiro uso, um tour escurece a tela e destaca cada área principal com uma explicação curta (pode pular; dá para rever em Central de ajuda).
 - **Comunidade completa:** página de cada publicação com comentários e respostas, páginas de grupo e encontros com local, mapa e dúvidas.
 - **Planos Gratuito, Plus e Premium:** regras em `src/data/plans.ts` e permissões em `src/state/usePlan.ts`. Gratuito: até 15 tarefas por filho, 2 trilhas em paralelo, até 20 grupos, 1 filho e resumo semanal. Plus: sem esses limites (2 filhos), acompanhantes, grupos exclusivos com selo, histórico e exportação. Premium: tudo do Plus + profissional de referência (mensagens e orientação por vídeo, fictícias). Chat e Modo Crise são ilimitados em todos os planos.
+- **Perfil e Configurações separados:** a foto na Home abre o Perfil (conta, filhos, rede de apoio, registros, plano) e a engrenagem abre as Configurações (notificações, acessibilidade, privacidade, ajuda e rever o tour).
 - **Conteúdos revisados:** artigos da Equipe Vita em `src/data/articles.ts`, intercalados no feed e salvos no perfil.
 
 ## Project structure

@@ -29,7 +29,7 @@ function buildSteps(hasRoutine: boolean): Step[] {
         },
       ];
   return [
-    { tab: 'HomeTab', title: 'Bem-vinda(o) ao Vita 💚', text: 'Em um minuto mostramos onde fica cada coisa. Você pode pular quando quiser e rever o tour depois em Perfil e ajustes → Central de ajuda.' },
+    { tab: 'HomeTab', title: 'Bem-vinda(o) ao Vita 💚', text: 'Em um minuto mostramos onde fica cada coisa. Você pode pular quando quiser e rever o tour depois na engrenagem (Configurações).' },
     { tab: 'HomeTab', target: 'tabbar', title: 'As abas do app', text: 'Home, Rotina, Fases, Parceiros, Comunidade e Chat. Toque numa aba para trocar de área.' },
     { tab: 'HomeTab', target: 'home-child', title: 'De quem estamos falando', text: 'Toque aqui para trocar de filho ou filha. Rotina, Fases e Chat passam a falar dessa criança.' },
     ...home,
@@ -40,7 +40,7 @@ function buildSteps(hasRoutine: boolean): Step[] {
     { tab: 'ParceirosTab', target: 'partners-actions', title: 'Lugares que acolhem', text: 'Veja os parceiros no mapa e seus cupons. O selo "Vita recomenda" só vai para lugares que a equipe visitou.' },
     { tab: 'ComunidadeTab', target: 'community-tabs', title: 'Comunidade', text: 'Converse com outras famílias no feed e nos grupos, e participe dos encontros online e presenciais.' },
     { tab: 'IATab', target: 'chat-input', title: 'Chat', text: 'Escreva do jeito que der, quando precisar: o Chat responde com passos práticos para o dia a dia. Não substitui profissionais de saúde.' },
-    { tab: 'HomeTab', target: 'home-gear', title: 'Ajustes e muito mais', text: 'Na engrenagem ficam o perfil, os filhos, o Acompanhamento, o Diário de crises, a acessibilidade e o modo escuro.' },
+    { tab: 'HomeTab', target: 'home-gear', title: 'Perfil e configurações', text: 'Na sua foto ficam a conta, os filhos, o plano, o Acompanhamento e o Diário de crises. Na engrenagem, notificações, acessibilidade, privacidade e ajuda.' },
     { tab: 'HomeTab', title: 'Tudo pronto!', text: 'Comece pelo que fizer mais sentido hoje. Uma coisa só já basta.' },
   ];
 }
