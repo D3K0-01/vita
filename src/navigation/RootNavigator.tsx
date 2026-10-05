@@ -10,6 +10,8 @@ import NewTask4d from '../screens/routine/NewTask4d';
 import LockScreenReminder4e from '../screens/routine/LockScreenReminder4e';
 import Breathing from '../screens/wellbeing/Breathing';
 import Article from '../screens/community/Article';
+import PostThread from '../screens/community/PostThread';
+import GroupDetail from '../screens/community/GroupDetail';
 import { useApp } from '../state/AppContext';
 
 const Stack = createNativeStackNavigator();
@@ -32,6 +34,8 @@ export function RootNavigator() {
           <Stack.Screen name="PlansStack" component={PlansNavigator} options={{ presentation: 'card' }} />
           <Stack.Screen name="Breathing" component={Breathing} options={{ presentation: 'fullScreenModal' }} />
           <Stack.Screen name="Article" component={Article} />
+          <Stack.Screen name="PostThread" component={PostThread} />
+          <Stack.Screen name="GroupDetail" component={GroupDetail} />
         </>
       )}
     </Stack.Navigator>

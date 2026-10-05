@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { ChevronRight, Bell, FileText, LayoutGrid, Wind, Check } from 'lucide-react-native';
+import { ChevronRight, Bell, FileText, Settings, Wind, Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -42,15 +42,6 @@ export default function HomeScreen({ navigation }: any) {
   const nextMeeting = upcomingMeetings(today)[0];
   const enrolled = state.meetings.includes(nextMeeting.id);
 
-  const openMenu = () =>
-    choose('Menu', [
-      { label: 'Acompanhamento', hint: 'semana, mês e relatório para consultas', onPress: () => navigation.navigate('TrackingStack') },
-      { label: 'Perfil e ajustes', hint: 'conta, filhos, notificações', onPress: () => navigation.navigate('SettingsStack') },
-      { label: 'Acessibilidade', hint: 'texto, contraste, modo escuro', onPress: () => navigation.navigate('SettingsStack', { screen: 'Accessibility8c' }) },
-      { label: 'Planos', hint: `plano atual: ${state.plan === 'plus' ? 'Plus' : 'Base'}`, onPress: () => navigation.navigate('PlansStack') },
-      { label: 'Respirar 2 minutos', onPress: () => navigation.navigate('Breathing') },
-    ]);
-
   const Header = (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
       <View style={{ flex: 1 }}>
@@ -64,15 +55,15 @@ export default function HomeScreen({ navigation }: any) {
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Pressable onPress={() => navigation.navigate('SettingsStack')} accessibilityRole="button" accessibilityLabel="Perfil e ajustes">
-          <Avatar person="camila" name={state.parentName} size={44} ring />
+          <Avatar person="me" name={state.parentName} size={44} ring />
         </Pressable>
         <Pressable
-          onPress={openMenu}
+          onPress={() => navigation.navigate('SettingsStack')}
           accessibilityRole="button"
-          accessibilityLabel="Abrir menu"
+          accessibilityLabel="Configurações"
           style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}
         >
-          <LayoutGrid size={18} color={palette.text} strokeWidth={1.8} />
+          <Settings size={20} color={palette.text} strokeWidth={1.8} />
         </Pressable>
       </View>
     </View>
@@ -184,7 +175,7 @@ export default function HomeScreen({ navigation }: any) {
 
   const MeetingNotice = (
     <Pressable
-      onPress={() => navigation.navigate('ComunidadeTab', { tab: 'Encontros' })}
+      onPress={() => navigation.navigate('ComunidadeTab', { tab: 'Encontros', meetingId: nextMeeting.id })}
       accessibilityRole="button"
       style={({ pressed }) => ({ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.7 : 1 })}
     >

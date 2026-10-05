@@ -7,11 +7,11 @@ import {
   defaultChildren,
   exampleRoutine,
   calmingThings as defaultCalming,
-  communityPosts,
   taskOccursOn,
 } from '../data/mock';
 import { Coupon, Partner, Review, getPartner } from '../data/partners';
 import { TrackProgress, initialTracks, initialConquests } from '../data/tracks';
+import { getGroup } from '../data/community';
 import { dateKey } from '../utils/date';
 
 export type Mood = 'tranquilo' | 'agitado' | 'dificil' | null;
@@ -26,7 +26,8 @@ export type ChatThread = { id: string; title: string; date: string; messages: Ch
 
 export type HealthyBreak = { id: string; label: string; date: string; childId: string };
 
-export type Comment = { id: string; postId: string; text: string; date: string };
+/** Comentário do usuário. `postId` é o id do post ou do encontro; `parentId` indica resposta. */
+export type Comment = { id: string; postId: string; parentId?: string; mention?: string; text: string; date: string };
 
 export type Prefs = {
   notifications: Record<string, boolean>;
@@ -59,7 +60,11 @@ export type StoredState = {
   savedPartners: string[]; // parceiros favoritados (1a/1c)
   communityPartners: Partner[]; // locais cadastrados na 1g — sempre sem selo, em análise
   userReviews: Review[]; // relatos escritos pelo usuário (1f)
+  /** Publicações feitas pelo usuário (as de exemplo ficam em data/community.ts). */
   posts: Post[];
+  likedComments: string[];
+  /** Foto de perfil escolhida pelo usuário (data URI). */
+  photo: string | null;
   likedPosts: string[];
   savedPosts: string[];
   hiddenPosts: string[];
@@ -135,7 +140,9 @@ const initialState: StoredState = {
   savedPartners: [],
   communityPartners: [],
   userReviews: [],
-  posts: communityPosts,
+  posts: [],
+  likedComments: [],
+  photo: null,
   likedPosts: [],
   savedPosts: [],
   hiddenPosts: [],
@@ -154,6 +161,8 @@ const initialState: StoredState = {
 };
 
 export type TaskInput = Omit<Task, 'id' | 'childId' | 'doneDates'>;
+
+type ToggleKey = 'likedPosts' | 'savedPosts' | 'hiddenPosts' | 'joinedGroups' | 'meetings' | 'likedComments';
 
 type Ctx = {
   state: AppState;
@@ -181,9 +190,9 @@ type Ctx = {
   toggleSavedPartner: (partnerId: string) => void;
   addCommunityPartner: (partner: Partner) => void;
   addUserReview: (review: Review) => void;
-  addPost: (body: string, group: string) => void;
-  toggleIn: (key: 'likedPosts' | 'savedPosts' | 'hiddenPosts' | 'joinedGroups' | 'meetings', id: string) => void;
-  addComment: (postId: string, text: string) => void;
+  addPost: (body: string, groupId: string) => void;
+  toggleIn: (key: ToggleKey, id: string) => void;
+  addComment: (postId: string, text: string, parentId?: string, mention?: string) => void;
   setPrefs: (patch: Partial<Prefs>) => void;
   resetDemo: () => void;
   loaded: boolean;
@@ -204,7 +213,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .then((raw) => {
         if (raw) {
           const saved = JSON.parse(raw) as Partial<StoredState>;
-          setStored({ ...initialState, ...saved, prefs: { ...initialState.prefs, ...(saved.prefs ?? {}) } });
+          setStored({
+            ...initialState,
+            ...saved,
+            prefs: { ...initialState.prefs, ...(saved.prefs ?? {}) },
+            // versões antigas guardavam os posts de exemplo junto; agora só os do usuário
+            posts: (saved.posts ?? []).filter((p) => p.mine).map((p) => ({ ...p, groupId: p.groupId ?? 'g1', avatar: 'me' as const })),
+          });
         }
       })
       .catch(() => {})
@@ -364,22 +379,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  const addPost = useCallback((body: string, group: string) => {
+  const addPost = useCallback((body: string, groupId: string) => {
     setStored((s) => ({
       ...s,
       posts: [
-        { id: uid('p'), group, author: s.parentName, avatar: 'camila', body, likes: 0, comments: 0, createdAt: new Date().toISOString(), mine: true },
+        { id: uid('p'), groupId, group: getGroup(groupId)?.name ?? 'Comunidade', author: s.parentName, avatar: 'me', body, likes: 0, createdAt: new Date().toISOString(), mine: true },
         ...s.posts,
       ],
     }));
   }, []);
 
-  const toggleIn = useCallback((key: 'likedPosts' | 'savedPosts' | 'hiddenPosts' | 'joinedGroups' | 'meetings', id: string) => {
+  const toggleIn = useCallback((key: ToggleKey, id: string) => {
     setStored((s) => ({ ...s, [key]: s[key].includes(id) ? s[key].filter((x) => x !== id) : [...s[key], id] }));
   }, []);
 
-  const addComment = useCallback((postId: string, text: string) => {
-    setStored((s) => ({ ...s, comments: [...s.comments, { id: uid('cm'), postId, text, date: new Date().toISOString() }] }));
+  const addComment = useCallback((postId: string, text: string, parentId?: string, mention?: string) => {
+    setStored((s) => ({ ...s, comments: [...s.comments, { id: uid('cm'), postId, parentId, mention, text, date: new Date().toISOString() }] }));
   }, []);
 
   const setPrefs = useCallback((patch: Partial<Prefs>) => setStored((s) => ({ ...s, prefs: { ...s.prefs, ...patch } })), []);

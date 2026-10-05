@@ -108,7 +108,7 @@ export default function ChatIA5a({ navigation, route }: any) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.bg }} edges={['top']}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10, gap: 8 }}>
-        <Text style={[type.title, { color: palette.text }]}>Conversar</Text>
+        <Text style={[type.title, { color: palette.text }]}>Chat</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Pressable onPress={newConversation} accessibilityRole="button" accessibilityLabel="Nova conversa" style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
             <SquarePen size={19} color={palette.text} strokeWidth={1.8} />
@@ -119,24 +119,29 @@ export default function ChatIA5a({ navigation, route }: any) {
         </View>
       </View>
 
+      {/* SOS fixo: fica sempre visível, mesmo rolando a conversa */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: palette.divider }}>
+        <Pressable
+          onPress={() => navigation.navigate('CrisisStack', { screen: state.crisisSession ? 'Resume5e' : 'Triage5b' })}
+          accessibilityRole="button"
+          accessibilityLabel="SOS: abrir o Modo Crise"
+          style={({ pressed }) => ({ backgroundColor: colors.darkAzure, borderRadius: 16, paddingVertical: 9, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.9 : 1 })}
+        >
+          <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: colors.offWhite, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontFamily: 'BricolageGrotesque_600SemiBold', fontSize: 11, color: colors.darkAzure }}>SOS</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[type.cardTitle, { color: colors.offWhite, fontSize: 15 }]}>Modo Crise</Text>
+            <Text style={[type.caption, { color: colors.offWhite, fontSize: 11.5, opacity: 0.8 }]}>passo a passo agora, em 1 toque</Text>
+          </View>
+          <ChevronRight size={18} color={colors.offWhite} />
+        </Pressable>
+      </View>
+
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
         <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
           <ChildPill />
 
-          <Pressable
-            onPress={() => navigation.navigate('CrisisStack', { screen: state.crisisSession ? 'Resume5e' : 'Triage5b' })}
-            accessibilityRole="button"
-            style={({ pressed }) => ({ backgroundColor: colors.darkAzure, borderRadius: 18, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 14, opacity: pressed ? 0.9 : 1 })}
-          >
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.offWhite, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontFamily: 'BricolageGrotesque_600SemiBold', fontSize: 12.5, color: colors.darkAzure }}>SOS</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[type.cardTitle, { color: colors.offWhite, fontSize: 16 }]}>Modo Crise</Text>
-              <Text style={[type.caption, { color: colors.offWhite, fontSize: 12, opacity: 0.8, marginTop: 2 }]}>passo a passo agora, em 1 toque</Text>
-            </View>
-            <ChevronRight size={18} color={colors.offWhite} />
-          </Pressable>
 
           <View style={{ flexDirection: 'row', gap: 10, backgroundColor: colors.greyAzure + '29', borderRadius: 14, padding: 12 }}>
             <Info size={16} color={palette.text} strokeWidth={1.8} />

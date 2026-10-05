@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { ChevronRight, Plus, LogOut } from 'lucide-react-native';
+import { ChevronRight, Plus, LogOut, Camera } from 'lucide-react-native';
+import { pickProfilePhoto } from '../../utils/pickImage';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { BackHeader } from '../../components/BackHeader';
@@ -50,8 +51,34 @@ function Section({ label, right, children }: { label: string; right?: React.Reac
 
 export default function SettingsHome8a({ navigation }: any) {
   const { palette, colors, type } = useTheme();
-  const { state, logout } = useApp();
-  const { confirm } = useUI();
+  const { state, logout, setState } = useApp();
+  const { confirm, choose, toast } = useUI();
+
+  const photoMenu = () =>
+    choose('Foto de perfil', [
+      {
+        label: state.photo ? 'Escolher outra foto' : 'Escolher foto da galeria',
+        onPress: async () => {
+          const uri = await pickProfilePhoto();
+          if (uri) {
+            setState((s) => ({ ...s, photo: uri }));
+            toast('Foto atualizada');
+          }
+        },
+      },
+      ...(state.photo
+        ? [
+            {
+              label: 'Remover foto',
+              destructive: true,
+              onPress: () => {
+                setState((s) => ({ ...s, photo: null }));
+                toast('Foto removida');
+              },
+            },
+          ]
+        : []),
+    ]);
 
   const signOut = async () => {
     if (await confirm({ title: 'Sair da conta?', message: 'Seus dados continuam salvos neste aparelho para quando você voltar.', confirmLabel: 'Sair' })) logout();
@@ -63,10 +90,15 @@ export default function SettingsHome8a({ navigation }: any) {
 
       <Pressable
         onPress={() => navigation.navigate('EditProfile')}
-        accessibilityRole="button"
+        accessibilityHint="Abre nome e e-mail"
         style={({ pressed }) => ({ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 18, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14, opacity: pressed ? 0.8 : 1 })}
       >
-        <Avatar person="camila" name={state.parentName} size={50} />
+        <Pressable onPress={photoMenu} accessibilityRole="button" accessibilityLabel="Trocar foto de perfil" hitSlop={6}>
+          <Avatar person="me" name={state.parentName} size={56} />
+          <View style={{ position: 'absolute', right: -2, bottom: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: colors.darkAzure, borderWidth: 2, borderColor: palette.surface, alignItems: 'center', justifyContent: 'center' }}>
+            <Camera size={12} color={colors.offWhite} />
+          </View>
+        </Pressable>
         <View style={{ flex: 1 }}>
           <Text style={[type.title, { color: palette.text, fontSize: 20 }]}>{state.parentName}</Text>
           <Text style={[type.caption, { fontSize: 12, color: palette.textMuted, marginTop: 2 }]} numberOfLines={1}>
@@ -117,6 +149,11 @@ export default function SettingsHome8a({ navigation }: any) {
             <ChevronRight size={16} color={palette.hint} />
           </Pressable>
         ))}
+      </Section>
+
+      <Section label="Atalhos">
+        <Row first title="Acompanhamento" sub="semana, mês e relatório para consultas" onPress={() => navigation.getParent()?.navigate('TrackingStack')} />
+        <Row title="Respirar 2 minutos" sub="respiração guiada, sem som" onPress={() => navigation.getParent()?.navigate('Breathing')} />
       </Section>
 
       <Section label="Preferências">

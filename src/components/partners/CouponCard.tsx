@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { PhotoPlaceholder } from './PhotoPlaceholder';
 import { SeloBadge } from './SeloBadge';
@@ -55,50 +55,68 @@ export function CouponCard({ partner, coupon }: { partner: Partner; coupon: Coup
   );
 }
 
-export function CouponCardCompact({ partner, coupon, footer }: { partner: Partner; coupon: Coupon; footer?: React.ReactNode }) {
+export function CouponCardCompact({ partner, coupon, footer, onPress }: { partner: Partner; coupon: Coupon; footer?: React.ReactNode; onPress?: () => void }) {
   const { palette, colors, type, radii, alpha } = useTheme();
   const usado = coupon.status === 'usado';
+  const b = partner.beneficio;
 
   return (
-    <View
-      style={{
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityHint={onPress ? `Abre o cupom de ${partner.nome}` : undefined}
+      style={({ pressed }) => ({
         backgroundColor: palette.surface,
         borderWidth: 1,
         borderColor: palette.surfaceBorder,
         borderRadius: radii.lg,
-        padding: 13,
-        opacity: usado ? 0.75 : 1,
-      }}
+        overflow: 'hidden',
+        opacity: usado ? 0.75 : pressed ? 0.9 : 1,
+      })}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <PhotoPlaceholder label="Logo" height={46} radius={13} style={{ width: 46 }} fontSize={9.5} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13 }}>
+        <PhotoPlaceholder label="Logo" height={42} radius={12} style={{ width: 42 }} fontSize={9} />
         <View style={{ flex: 1, gap: 2 }}>
           <SeloBadge selo={partner.selo} size={9} />
           <Text style={[type.cardTitle, { fontSize: 15.5, color: palette.text }]} numberOfLines={1}>
             {partner.nome}
           </Text>
           <Text style={[type.caption, { fontSize: 11.5, color: palette.textFaint }]} numberOfLines={1}>
-            {partner.beneficio.titulo}
-          </Text>
-          <Text style={{ fontFamily: 'BricolageGrotesque_600SemiBold', fontSize: 14, letterSpacing: 1.4, color: palette.text, marginTop: 2 }}>
-            {coupon.codigo}
+            {partner.categoria} · {partner.bairro}
           </Text>
         </View>
-        <View
-          style={{
-            backgroundColor: usado ? alpha(colors.greyAzure, 0.2) : alpha(colors.pastelGreen, 0.55),
-            borderRadius: 8,
-            paddingVertical: 4,
-            paddingHorizontal: 8,
-            maxWidth: 92,
-          }}
-        >
+        <View style={{ backgroundColor: usado ? alpha(colors.greyAzure, 0.2) : alpha(colors.pastelGreen, 0.55), borderRadius: 8, paddingVertical: 4, paddingHorizontal: 8, maxWidth: 96 }}>
           <Text style={{ fontFamily: 'Lexend_500Medium', fontSize: 10.5, color: usado ? palette.textMuted : colors.accent2, textAlign: 'center' }}>
-            {coupon.validade}
+            {usado ? 'usado' : coupon.validade}
           </Text>
         </View>
       </View>
-      {footer}
-    </View>
+
+      {/* o benefício em destaque: o que o cupom dá */}
+      <View style={{ marginHorizontal: 13, backgroundColor: alpha(colors.pastelGreen, usado ? 0.25 : 0.45), borderRadius: 14, padding: 13, flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+        <View style={{ backgroundColor: colors.accent2, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 10, minWidth: 74, alignItems: 'center' }}>
+          <Text style={{ fontFamily: 'BricolageGrotesque_600SemiBold', fontSize: 15, color: '#fff', textAlign: 'center' }} numberOfLines={2}>
+            {b.resumo}
+          </Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[type.eyebrow, { fontSize: 9.5, color: colors.accent2 }]}>Seu benefício</Text>
+          <Text style={[type.body, { fontSize: 14, color: palette.text, fontFamily: 'Lexend_500Medium', marginTop: 2 }]}>{b.titulo}</Text>
+        </View>
+      </View>
+
+      <View style={{ paddingHorizontal: 13, paddingTop: 10, paddingBottom: 13, gap: 6 }}>
+        <Text style={[type.caption, { fontSize: 12, color: palette.textMuted, lineHeight: 18 }]}>{b.regras}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+          <Text style={{ fontFamily: 'BricolageGrotesque_600SemiBold', fontSize: 14, letterSpacing: 1.4, color: palette.text }}>{coupon.codigo}</Text>
+          {onPress && !usado ? (
+            <Pressable onPress={onPress} accessibilityRole="button" style={{ minHeight: 36, justifyContent: 'center', paddingLeft: 10 }}>
+              <Text style={[type.caption, { fontSize: 12.5, color: colors.accent2, fontFamily: 'Lexend_500Medium' }]}>mostrar no balcão ›</Text>
+            </Pressable>
+          ) : null}
+        </View>
+        {footer}
+      </View>
+    </Pressable>
   );
 }

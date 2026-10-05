@@ -63,13 +63,14 @@ export default function MyCoupons1h({ navigation }: any) {
               <CouponCardCompact
                 partner={partner}
                 coupon={coupon}
+                onPress={coupon.status === 'ativo' ? () => navigation.navigate('CouponGenerated1d', { partnerId: partner.id, couponId: coupon.id }) : undefined}
                 footer={
                   coupon.status === 'ativo' ? (
-                    <View style={{ flexDirection: 'row', gap: 16, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: palette.divider }}>
-                      <Pressable onPress={() => navigation.navigate('PartnerDetail1c', { partnerId: partner.id })}>
+                    <View style={{ flexDirection: 'row', gap: 16, marginTop: 6, paddingTop: 4, borderTopWidth: 1, borderTopColor: palette.divider }}>
+                      <Pressable onPress={() => navigation.navigate('PartnerDetail1c', { partnerId: partner.id })} style={{ minHeight: 40, justifyContent: 'center' }}>
                         <Text style={[type.caption, { fontSize: 12.5, color: palette.textMuted }]}>ver parceiro</Text>
                       </Pressable>
-                      <Pressable onPress={() => markCouponUsed(coupon.id)} style={{ marginLeft: 'auto' }}>
+                      <Pressable onPress={() => markCouponUsed(coupon.id)} style={{ marginLeft: 'auto', minHeight: 40, justifyContent: 'center' }}>
                         <Text style={[type.caption, { fontSize: 12.5, color: colors.accent2, fontFamily: 'Lexend_500Medium' }]}>marcar como usado</Text>
                       </Pressable>
                     </View>

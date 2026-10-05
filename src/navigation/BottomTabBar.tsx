@@ -20,7 +20,7 @@ const LABELS: Record<string, string> = {
   FasesTab: 'Fases',
   ParceirosTab: 'Parceiros',
   ComunidadeTab: 'Comunidade',
-  IATab: 'IA',
+  IATab: 'Chat',
 };
 
 export function BottomTabBar({ state, navigation }: BottomTabBarProps) {

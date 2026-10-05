@@ -62,74 +62,9 @@ export function exampleRoutine(childId: string, today = new Date()): Task[] {
 
 export const calmingThings = ['abraço apertado', 'objeto favorito'];
 
-export type Post = {
-  id: string;
-  group: string;
-  author: string;
-  avatar: 'julia' | 'diego' | 'camila' | null;
-  body: string;
-  likes: number;
-  comments: number;
-  createdAt: string;
-  mine?: boolean;
-};
-
-const hoursAgo = (h: number) => new Date(Date.now() - h * 3600000).toISOString();
-
-export const communityPosts: Post[] = [
-  {
-    id: 'p1',
-    group: 'Sono e hora de dormir',
-    author: 'Renata M.',
-    avatar: null,
-    body: 'Aqui em casa a rotina de dormir trava sempre na troca de roupa. Testamos deixar o pijama escolhido desde a tarde e ajudou um pouco. Como vocês fazem?',
-    likes: 14,
-    comments: 6,
-    createdAt: hoursAgo(2),
-  },
-  {
-    id: 'p2',
-    group: 'Primeiros passos com rotina',
-    author: 'Diego F.',
-    avatar: 'diego',
-    body: 'Depois de 3 semanas usando ícones em vez de texto, as manhãs ficaram bem mais tranquilas por aqui.',
-    likes: 8,
-    comments: 3,
-    createdAt: hoursAgo(5),
-  },
-  {
-    id: 'p3',
-    group: 'TDAH em casa',
-    author: 'Julia',
-    avatar: 'julia',
-    body: 'Foi um daqueles dias. Só queria dividir com quem entende.',
-    likes: 22,
-    comments: 9,
-    createdAt: hoursAgo(26),
-  },
-];
-
-export const communityGroups = [
-  { id: 'g1', name: 'Sono e hora de dormir', members: 1204 },
-  { id: 'g2', name: 'Primeiros passos com rotina', members: 2891 },
-  { id: 'g3', name: 'TDAH em casa', members: 3407 },
-  { id: 'g4', name: 'TEA no dia a dia', members: 1988 },
-];
-
-export type Meeting = { id: string; title: string; date: string; info: string; enrolled: number };
-
-export function upcomingMeetings(today = new Date()): Meeting[] {
-  const at = (days: number, hour: number) => {
-    const d = addDays(today, days);
-    d.setHours(hour, 0, 0, 0);
-    return d.toISOString();
-  };
-  return [
-    { id: 'm1', title: 'Roda de conversa: sono', date: at(1, 20), info: 'online · 20h · 60 min', enrolled: 38 },
-    { id: 'm2', title: 'Rotina visual na prática', date: at(4, 19), info: 'online · 19h · 45 min', enrolled: 54 },
-    { id: 'm3', title: 'Seletividade alimentar', date: at(9, 20), info: 'online · 20h · 60 min', enrolled: 21 },
-  ];
-}
+// Comunidade: ver data/community.ts
+export type { Post, Meeting } from './community';
+export { upcomingMeetings } from './community';
 
 export const article = {
   title: 'Por que "quebras saudáveis" não são falhas',
