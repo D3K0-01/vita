@@ -276,13 +276,6 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
             {/* bloqueia toques no app enquanto o tour está aberto */}
             <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
 
-            {/* enquanto a etapa carrega, a saída continua sempre à mão */}
-            {!ready && (
-              <Pressable onPress={end} accessibilityRole="button" accessibilityLabel="Pular o tour" style={{ position: 'absolute', top: 12, right: 12, minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: 'center', backgroundColor: palette.bg }}>
-                <Text style={[type.bodySm, { color: palette.text }]}>Pular tour</Text>
-              </Pressable>
-            )}
-
             {ready && (
               <Animated.View
                 onLayout={(e) => setCardH(e.nativeEvent.layout.height)}
