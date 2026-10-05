@@ -10,6 +10,7 @@ import { Button } from '../../components/Button';
 import { SOSButton } from '../../components/SOSButton';
 import { Avatar } from '../../components/Avatar';
 import { ChildPill } from '../../components/ChildPill';
+import { TourTarget } from '../../components/tour/Tour';
 import { useUI } from '../../components/UIProvider';
 import { useApp } from '../../state/AppContext';
 import { upcomingMeetings } from '../../data/mock';
@@ -50,13 +51,16 @@ export default function HomeScreen({ navigation }: any) {
         </Text>
         <Text style={[type.caption, { color: palette.textMuted, marginTop: 2, fontSize: 13 }]}>{formatLongDate(today)}</Text>
         <View style={{ marginTop: 10 }}>
-          <ChildPill />
+          <TourTarget id="home-child" style={{ alignSelf: 'flex-start' }}>
+            <ChildPill />
+          </TourTarget>
         </View>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Pressable onPress={() => navigation.navigate('SettingsStack')} accessibilityRole="button" accessibilityLabel="Perfil e ajustes">
           <Avatar person="me" name={state.parentName} size={44} ring />
         </Pressable>
+        <TourTarget id="home-gear">
         <Pressable
           onPress={() => navigation.navigate('SettingsStack')}
           accessibilityRole="button"
@@ -65,6 +69,7 @@ export default function HomeScreen({ navigation }: any) {
         >
           <Settings size={20} color={palette.text} strokeWidth={1.8} />
         </Pressable>
+        </TourTarget>
       </View>
     </View>
   );
@@ -198,6 +203,7 @@ export default function HomeScreen({ navigation }: any) {
       <ScreenContainer floating={<SOSButton />} contentStyle={{ paddingHorizontal: 20, paddingTop: 10, gap: 18 }}>
         {Header}
 
+        <TourTarget id="home-main">
         <Card radius={22} padding={22} style={{ gap: 16 }}>
           <LinearGradient colors={[colors.pastelGreen, colors.greyAzure]} style={{ height: 140, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}>
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -226,6 +232,7 @@ export default function HomeScreen({ navigation }: any) {
             />
           </View>
         </Card>
+        </TourTarget>
 
         {TrackCard}
 
@@ -254,6 +261,7 @@ export default function HomeScreen({ navigation }: any) {
     <ScreenContainer floating={<SOSButton />} contentStyle={{ paddingHorizontal: 20, paddingTop: 10, gap: 16 }}>
       {Header}
 
+      <TourTarget id="home-mood">
       <Card>
         <Text style={[type.cardTitle, { color: palette.text, fontSize: 18 }]}>Como está o dia por aí?</Text>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
@@ -285,9 +293,11 @@ export default function HomeScreen({ navigation }: any) {
           {state.mood === 'agitado' ? 'Anotado. Que tal uma pausa curta entre as tarefas de hoje?' : 'Leva 5 segundos. Só pra ajustar as sugestões de hoje.'}
         </Text>
       </Card>
+      </TourTarget>
 
       {state.mood === 'agitado' && BreatheCard}
 
+      <TourTarget id="home-main">
       <Card padding={18}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <Text style={[type.cardTitle, { color: palette.text, fontSize: 17 }]}>Resumo do dia</Text>
@@ -311,6 +321,7 @@ export default function HomeScreen({ navigation }: any) {
           Marque aqui mesmo. Dá pra ajustar depois.
         </Text>
       </Card>
+      </TourTarget>
 
       {TrackCard}
 

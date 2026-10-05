@@ -12,6 +12,7 @@ import {
 import { Coupon, Partner, Review, getPartner } from '../data/partners';
 import { TrackProgress, initialTracks, initialConquests } from '../data/tracks';
 import { getGroup } from '../data/community';
+import { CrisisLogEntry, exampleLog } from '../data/crisisLog';
 import { dateKey } from '../utils/date';
 
 export type Mood = 'tranquilo' | 'agitado' | 'dificil' | null;
@@ -53,6 +54,9 @@ export type StoredState = {
   tracks: Record<string, TrackProgress>;
   conquests: { id: string; label: string; date: string }[];
   crisisAttempts: CrisisAttempt[];
+  crisisLog: CrisisLogEntry[];
+  /** Tour guiado de primeiro uso já visto (ou pulado). */
+  tourDone: boolean;
   crisisSession: CrisisSession; // set while inside the step guide, cleared on resolution
   simulateOffline: boolean; // Accessibility demo toggle -> Crisis step guide shows the offline variant (5f)
   breaks: HealthyBreak[];
@@ -105,6 +109,8 @@ const initialState: StoredState = {
   tracks: initialTracks,
   conquests: initialConquests,
   crisisAttempts: [],
+  crisisLog: [],
+  tourDone: false,
   crisisSession: null,
   simulateOffline: false,
   breaks: [],
@@ -179,6 +185,10 @@ type Ctx = {
   completeOnboarding: (patch?: Partial<StoredState>) => void;
   logout: () => void;
   addCrisisAttempt: (worked: boolean) => void;
+  addCrisisLog: (entry: Omit<CrisisLogEntry, 'id' | 'childId'>) => void;
+  removeCrisisLog: (id: string) => void;
+  loadExampleCrisisLog: () => void;
+  clearExampleCrisisLog: () => void;
   registerTrackAttempt: (trackId: string, advanced: boolean, note?: string) => void;
   startTrack: (trackId: string) => void;
   setCrisisSession: (s: CrisisSession) => void;
@@ -294,6 +304,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addCrisisAttempt = useCallback((worked: boolean) => {
     setStored((s) => ({ ...s, crisisAttempts: [...s.crisisAttempts, { id: uid('a'), date: new Date().toISOString(), worked }] }));
   }, []);
+
+  const addCrisisLog = useCallback((entry: Omit<CrisisLogEntry, 'id' | 'childId'>) => {
+    setStored((s) => ({ ...s, crisisLog: [{ ...entry, id: uid('cl'), childId: s.activeChildId }, ...s.crisisLog].sort((a, b) => b.date.localeCompare(a.date)) }));
+  }, []);
+
+  const removeCrisisLog = useCallback((id: string) => setStored((s) => ({ ...s, crisisLog: s.crisisLog.filter((e) => e.id !== id) })), []);
+
+  const loadExampleCrisisLog = useCallback(() => {
+    setStored((s) => ({
+      ...s,
+      crisisLog: [...s.crisisLog.filter((e) => !e.example), ...exampleLog(s.activeChildId)].sort((a, b) => b.date.localeCompare(a.date)),
+    }));
+  }, []);
+
+  const clearExampleCrisisLog = useCallback(() => setStored((s) => ({ ...s, crisisLog: s.crisisLog.filter((e) => !e.example) })), []);
 
   const registerTrackAttempt = useCallback((trackId: string, advanced: boolean, note?: string) => {
     setStored((s) => {
@@ -442,6 +467,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       completeOnboarding,
       logout,
       addCrisisAttempt,
+      addCrisisLog,
+      removeCrisisLog,
+      loadExampleCrisisLog,
+      clearExampleCrisisLog,
       registerTrackAttempt,
       startTrack,
       setCrisisSession,
@@ -475,6 +504,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       completeOnboarding,
       logout,
       addCrisisAttempt,
+      addCrisisLog,
+      removeCrisisLog,
+      loadExampleCrisisLog,
+      clearExampleCrisisLog,
       registerTrackAttempt,
       startTrack,
       setCrisisSession,

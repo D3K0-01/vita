@@ -4,6 +4,7 @@ import { History, Info, ChevronRight, ArrowUp, SquarePen, WifiOff } from 'lucide
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ChildPill } from '../../components/ChildPill';
+import { TourTarget } from '../../components/tour/Tour';
 import { useUI } from '../../components/UIProvider';
 import { useApp, ChatMessage } from '../../state/AppContext';
 import { askVita } from '../../services/ai';
@@ -207,6 +208,7 @@ export default function ChatIA5a({ navigation, route }: any) {
           )}
         </ScrollView>
 
+        <TourTarget id="chat-input">
         <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10, borderTopWidth: 1, borderTopColor: palette.divider, backgroundColor: palette.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10 }}>
             <TextInput
@@ -267,6 +269,7 @@ export default function ChatIA5a({ navigation, route }: any) {
             </Text>
           )}
         </View>
+        </TourTarget>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

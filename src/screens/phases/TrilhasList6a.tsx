@@ -6,6 +6,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { SOSButton } from '../../components/SOSButton';
 import { ChildPill } from '../../components/ChildPill';
+import { TourTarget } from '../../components/tour/Tour';
 import { useApp } from '../../state/AppContext';
 import { TRACKS } from '../../data/tracks';
 import { monthName } from '../../utils/date';
@@ -31,14 +32,14 @@ export default function TrilhasList6a({ navigation }: any) {
       </Text>
 
       <View style={{ gap: 11 }}>
-        {TRACKS.map((t) => {
+        {TRACKS.map((t, idx) => {
           const p = state.tracks[t.id];
           const started = (p?.step ?? 0) > 0;
           const finished = started && p.step > t.phases.length;
           const progress = started ? Math.min(1, (p.step - 1 + (finished ? 0 : 0.5)) / t.phases.length) : 0;
           return (
+            <TourTarget key={t.id} id={idx === 0 ? 'phases-track' : `phases-${t.id}`}>
             <Pressable
-              key={t.id}
               onPress={() => navigation.navigate('TrilhaDetail6b', { id: t.id })}
               accessibilityRole="button"
               style={({ pressed }) => ({
@@ -74,6 +75,7 @@ export default function TrilhasList6a({ navigation }: any) {
                 <ChevronRight size={16} color={palette.hint} />
               </View>
             </Pressable>
+            </TourTarget>
           );
         })}
       </View>

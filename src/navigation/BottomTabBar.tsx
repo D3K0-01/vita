@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, useWindowDimensions } from 'react-native';
+import { TourTarget } from '../components/tour/Tour';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, CalendarCheck, Layers, Store, Users, MessageCircle } from 'lucide-react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
@@ -36,6 +37,7 @@ export function BottomTabBar({ state, navigation }: BottomTabBarProps) {
   if (focusedRoute.name === 'ParceirosTab' && nestedIndex > 0) return null;
 
   return (
+    <TourTarget id="tabbar">
     <View
       style={{
         flexDirection: 'row',
@@ -81,5 +83,6 @@ export function BottomTabBar({ state, navigation }: BottomTabBarProps) {
         );
       })}
     </View>
+    </TourTarget>
   );
 }

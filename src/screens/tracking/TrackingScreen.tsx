@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, Platform, Share } from 'react-native';
-import { ChevronRight, FileDown } from 'lucide-react-native';
+import { ChevronRight, FileDown, NotebookPen } from 'lucide-react-native';
+import { insightsFor } from '../../data/crisisLog';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -79,6 +80,12 @@ export default function TrackingScreen({ navigation }: any) {
         return `• ${t.name}: ${p.step > t.phases.length ? 'concluída' : `fase ${p.step} de ${t.phases.length} (${p.attempts} tentativas nesta fase)`}`;
       }),
       '',
+      ...(() => {
+        const log = state.crisisLog.filter((e) => e.childId === state.activeChildId);
+        if (!log.length) return [];
+        const ins = insightsFor(log);
+        return [`Diário de crises: ${log.length} registros.`, ...ins.map((i) => `• ${i.title}: ${i.text}`), ''];
+      })(),
       'Observações para a consulta:',
       '______________________________________________',
     ];
@@ -201,6 +208,24 @@ export default function TrackingScreen({ navigation }: any) {
           </View>
         </>
       )}
+
+      <Pressable
+        onPress={() => navigation.getParent()?.navigate('CrisisDiary')}
+        accessibilityRole="button"
+        style={({ pressed }) => ({ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.surfaceBorder, borderRadius: 18, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.75 : 1 })}
+      >
+        <NotebookPen size={20} color={colors.accent2} strokeWidth={1.8} />
+        <View style={{ flex: 1 }}>
+          <Text style={[type.cardTitle, { color: palette.text, fontSize: 15.5 }]}>Diário de crises</Text>
+          <Text style={[type.caption, { color: palette.textMuted, marginTop: 2 }]}>
+            {(() => {
+              const n = state.crisisLog.filter((e) => e.childId === state.activeChildId).length;
+              return n ? `${n} ${n === 1 ? 'registro' : 'registros'} · ver padrões` : 'registre como foram as crises e descubra padrões';
+            })()}
+          </Text>
+        </View>
+        <ChevronRight size={16} color={palette.hint} />
+      </Pressable>
 
       <View>
         <Text style={[type.eyebrow, { color: palette.hint, marginBottom: 10 }]}>Fases que avançaram</Text>

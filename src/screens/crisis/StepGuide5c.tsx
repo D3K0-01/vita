@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StackActions } from '@react-navigation/native';
 import { ChevronLeft, X, WifiOff, Wind, Phone, MessageCircle } from 'lucide-react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useUI } from '../../components/UIProvider';
@@ -31,7 +32,8 @@ export default function StepGuide5c({ navigation, route }: any) {
       addCrisisAttempt(true);
       toast('Que bom que passou. Cuide de você também.');
     }
-    closeAll();
+    // fecha o Modo Crise e abre o registro rápido do diário (pode pular)
+    navigation.getParent()?.dispatch(StackActions.replace('CrisisLog', { fromCrisis: true, category }));
   };
 
   const goTo = (s: number) => {

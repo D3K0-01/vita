@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { X, ChevronRight } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StackActions } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useApp } from '../../state/AppContext';
 
@@ -13,7 +14,7 @@ export default function Resume5e({ navigation }: any) {
   const passou = () => {
     setCrisisSession(null);
     addCrisisAttempt(true);
-    navigation.getParent()?.goBack();
+    navigation.getParent()?.dispatch(StackActions.replace('CrisisLog', { fromCrisis: true, category: session?.category ?? 'sensorial' }));
   };
 
   const continua = () => {
@@ -56,7 +57,7 @@ export default function Resume5e({ navigation }: any) {
         </View>
 
         <Text style={{ marginTop: 'auto', paddingBottom: 20, fontFamily: 'Lexend_300Light', fontSize: 12.5, lineHeight: 21, color: colors.offWhite, opacity: 0.65 }}>
-          Nada fica registrado como falha. Se escolher “passou”, é só um fecho: sem métrica, sem parabéns.
+          Nada fica registrado como falha. Se escolher “passou”, você pode anotar em 3 toques como foi — ou pular.
         </Text>
       </View>
     </SafeAreaView>

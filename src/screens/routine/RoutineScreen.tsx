@@ -7,6 +7,7 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { Card } from '../../components/Card';
 import { SOSButton } from '../../components/SOSButton';
 import { ChildPill } from '../../components/ChildPill';
+import { TourTarget } from '../../components/tour/Tour';
 import { useUI } from '../../components/UIProvider';
 import { useApp } from '../../state/AppContext';
 import { taskOccursOn, Task } from '../../data/mock';
@@ -105,6 +106,7 @@ export default function RoutineScreen({ navigation }: any) {
         <Text style={[type.title, { color: palette.text }]}>Rotina</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <ChildPill showAge={false} />
+          <TourTarget id="routine-add">
           <Pressable
             onPress={() => navigation.navigate('NewTask4d')}
             accessibilityRole="button"
@@ -115,6 +117,7 @@ export default function RoutineScreen({ navigation }: any) {
               <Plus size={20} color="#fff" strokeWidth={2.4} />
             </LinearGradient>
           </Pressable>
+          </TourTarget>
         </View>
       </View>
 
@@ -132,7 +135,7 @@ export default function RoutineScreen({ navigation }: any) {
         ))}
       </View>
 
-      {WeekNav}
+      <TourTarget id="routine-week">{WeekNav}</TourTarget>
 
       {tab === 'dia' ? (
         <>

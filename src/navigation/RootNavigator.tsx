@@ -12,6 +12,8 @@ import Breathing from '../screens/wellbeing/Breathing';
 import Article from '../screens/community/Article';
 import PostThread from '../screens/community/PostThread';
 import GroupDetail from '../screens/community/GroupDetail';
+import CrisisLog from '../screens/crisis/CrisisLog';
+import CrisisDiary from '../screens/crisis/CrisisDiary';
 import { useApp } from '../state/AppContext';
 
 const Stack = createNativeStackNavigator();
@@ -36,6 +38,8 @@ export function RootNavigator() {
           <Stack.Screen name="Article" component={Article} />
           <Stack.Screen name="PostThread" component={PostThread} />
           <Stack.Screen name="GroupDetail" component={GroupDetail} />
+          <Stack.Screen name="CrisisLog" component={CrisisLog} />
+          <Stack.Screen name="CrisisDiary" component={CrisisDiary} />
         </>
       )}
     </Stack.Navigator>

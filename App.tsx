@@ -21,6 +21,8 @@ import { AppProvider, useApp } from './src/state/AppContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { WebFrame } from './src/components/WebFrame';
 import { UIProvider } from './src/components/UIProvider';
+import { TourProvider } from './src/components/tour/Tour';
+import { navigationRef } from './src/navigation/navigationRef';
 
 function LoadingScreen() {
   return (
@@ -46,10 +48,12 @@ function AppShell() {
   if (!loaded) return <LoadingScreen />;
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <View style={{ flex: 1, backgroundColor: palette.bg }}>
-        <RootNavigator />
+        <TourProvider>
+          <RootNavigator />
+        </TourProvider>
       </View>
     </NavigationContainer>
   );

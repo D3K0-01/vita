@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { SOSButton } from '../../components/SOSButton';
+import { TourTarget } from '../../components/tour/Tour';
 import { Avatar } from '../../components/Avatar';
 import { PostCard, useFeed } from '../../components/community/PostCard';
 import { CommentThread, useCommentComposer, useCommentCount } from '../../components/community/CommentThread';
@@ -487,7 +488,9 @@ export default function CommunityScreen({ navigation, route }: any) {
         )}
       </View>
 
-      <Tabs active={tab} onChange={setTab} />
+      <TourTarget id="community-tabs">
+        <Tabs active={tab} onChange={setTab} />
+      </TourTarget>
       {tab === 'Feed' && <FeedTab query={query} navigation={navigation} />}
       {tab === 'Grupos' && <GroupsTab navigation={navigation} />}
       {tab === 'Encontros' && <MeetingsTab key={meetingToOpen ?? 'none'} initialOpen={meetingToOpen} />}

@@ -68,6 +68,9 @@ Revisão focada em uso no celular, mantendo a identidade visual (paleta, tipogra
 - **Novas telas:** boas-vindas, respiração guiada, histórico das trilhas, artigo completo, ajustes de conta, filhos, privacidade (LGPD: baixar/apagar dados), central de ajuda e suporte.
 - **Vários filhos:** o seletor no topo troca o filho em Home, Rotina, Fases, Acompanhamento e IA.
 - **Acessibilidade:** tamanho do texto, mais contraste, modo escuro e "desligar animações" funcionam e ficam salvos.
+- **Diário de crises:** ao sair do Modo Crise, registro em 3 toques (o que veio antes, intensidade/duração, o que ajudou). A tela do diário mostra padrões calculados no aparelho e leva o resumo para o Chat ou para o relatório.
+- **Tour guiado:** no primeiro uso, um tour escurece a tela e destaca cada área principal com uma explicação curta (pode pular; dá para rever em Central de ajuda).
+- **Comunidade completa:** página de cada publicação com comentários e respostas, páginas de grupo e encontros com local, mapa e dúvidas.
 
 ## Project structure
 

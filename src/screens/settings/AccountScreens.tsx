@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, Linking, Platform, Share } from 'react-native';
-import { ChevronDown, ChevronUp, Mail, MessageCircle, Download, Trash2 } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, Mail, MessageCircle, Download, Trash2, PlayCircle } from 'lucide-react-native';
+import { useTour } from '../../components/tour/Tour';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { BackHeader } from '../../components/BackHeader';
@@ -263,15 +264,19 @@ const FAQ = [
   { q: 'Como edito ou apago uma tarefa?', a: 'Na Rotina, toque no nome da tarefa. O quadradinho ao lado serve só para marcar como feita.' },
   { q: 'A IA substitui o terapeuta?', a: 'Não. Ela ajuda a pensar no dia a dia. Diagnóstico, remédios e planos de tratamento são com a equipe que acompanha a criança.' },
   { q: 'O que é o selo "Vita recomenda"?', a: 'Só os lugares que a equipe Vita visitou pessoalmente recebem o selo. Os indicados pela comunidade aparecem separados.' },
+  { q: 'O que é o Diário de crises?', a: 'Depois de cada crise, o Vita pergunta em 3 toques o que veio antes, como foi e o que ajudou. Com alguns registros, aparecem padrões — e você pode levar o resumo para o Chat ou para a consulta.' },
   { q: 'Posso usar sem pagar?', a: 'Sim. O plano Base é gratuito para sempre e o Modo Crise nunca fica atrás de um plano.' },
 ];
 
 export function Help() {
   const { palette, type } = useTheme();
+  const { start } = useTour();
   const [open, setOpen] = useState<number | null>(0);
   return (
     <ScreenContainer edges={['top', 'bottom']} contentStyle={{ paddingHorizontal: 20, paddingTop: 4, gap: 12 }}>
       <BackHeader title="Central de ajuda" />
+      <Button label="Rever o tour do app" icon={<PlayCircle size={17} color="#fff" />} onPress={start} />
+      <Text style={[type.eyebrow, { color: palette.hint, marginTop: 8 }]}>Perguntas frequentes</Text>
       {FAQ.map((f, i) => (
         <Pressable
           key={f.q}

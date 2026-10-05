@@ -4,6 +4,7 @@ import { MapPin, Search, Ticket, Award } from 'lucide-react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { SOSButton } from '../../components/SOSButton';
+import { TourTarget } from '../../components/tour/Tour';
 import { PartnerCard } from '../../components/partners/PartnerCard';
 import { useApp } from '../../state/AppContext';
 import { usePartnerFilters } from '../../state/PartnerFilters';
@@ -43,6 +44,7 @@ export default function PartnersList1a({ navigation }: any) {
           </View>
         </View>
 
+        <TourTarget id="partners-actions">
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <Pressable
             accessibilityRole="button"
@@ -61,6 +63,7 @@ export default function PartnersList1a({ navigation }: any) {
             <Ticket size={18} color={palette.text} strokeWidth={1.9} />
           </Pressable>
         </View>
+        </TourTarget>
       </View>
 
       <Pressable

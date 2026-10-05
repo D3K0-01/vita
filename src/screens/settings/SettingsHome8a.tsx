@@ -153,6 +153,7 @@ export default function SettingsHome8a({ navigation }: any) {
 
       <Section label="Atalhos">
         <Row first title="Acompanhamento" sub="semana, mês e relatório para consultas" onPress={() => navigation.getParent()?.navigate('TrackingStack')} />
+        <Row title="Diário de crises" sub="registros, padrões e análise com a IA" onPress={() => navigation.getParent()?.navigate('CrisisDiary')} />
         <Row title="Respirar 2 minutos" sub="respiração guiada, sem som" onPress={() => navigation.getParent()?.navigate('Breathing')} />
       </Section>
 

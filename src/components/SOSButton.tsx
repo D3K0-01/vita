@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../state/AppContext';
+import { TourTarget } from './tour/Tour';
 
 // Botão SOS flutuante — canto inferior direito, acima da barra de abas.
 // Abre o Modo Crise direto (5b) ou retoma a sessão deixada no meio (5e).
@@ -13,6 +14,7 @@ export function SOSButton({ bottom = 16 }: { bottom?: number }) {
   const { state } = useApp();
   return (
     <View style={{ pointerEvents: 'box-none', position: 'absolute', right: 16, bottom, alignItems: 'center', gap: 2 }}>
+      <TourTarget id="sos">
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="SOS: abrir o Modo Crise"
@@ -36,6 +38,7 @@ export function SOSButton({ bottom = 16 }: { bottom?: number }) {
       >
         <Text style={{ fontFamily: 'BricolageGrotesque_600SemiBold', fontSize: 14, color: colors.offWhite }}>SOS</Text>
       </Pressable>
+      </TourTarget>
     </View>
   );
 }
